@@ -1,7 +1,7 @@
 {
   "name": "legendario",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,9 +14,12 @@
     "react-dom": "^18.3.1",
     "zustand": "^4.5.2",
     "@ffmpeg/ffmpeg": "^0.12.10",
-    "@ffmpeg/util": "^0.12.1"
+    "@ffmpeg/util": "^0.12.1",
+    "@capacitor/core": "6.2.0",
+    "@capacitor/android": "6.2.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "6.2.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.8",
     "@vitejs/plugin-react": "^4.3.1",
