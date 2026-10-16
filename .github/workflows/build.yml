@@ -32,6 +32,8 @@ jobs:
         run: npx cap add android
       - name: Sincronizar recursos Android
         run: npx cap sync android
+      - name: Instalar módulos nativos LEGENDÁRIO
+        run: python3 scripts/install_native.py
       - name: Compilar APK debug instalável
         working-directory: android
         run: |
