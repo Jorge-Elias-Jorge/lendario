@@ -1,64 +1,33 @@
-import React, { useRef, useState } from 'react';
-import { useStore } from '../store';
-import { STYLES } from '../data/styles';
-import { ANIMATIONS } from '../data/animations';
-import { formatTime } from '../core/srt';
+import React,{useEffect,useRef,useState} from 'react';
+import {useStore} from '../store';
+import {STYLES} from '../data/styles';
+import {formatTime} from '../core/srt';
 
-export default function Editor() {
-  const { videoUrl, cues, selectedCueId, style, animation, select, updateCue, setStyle, setAnimation } = useStore();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [time, setTime] = useState(0);
-
-  const active = cues.find(c => time >= c.start && time <= c.end);
-  const selected = cues.find(c => c.id === selectedCueId);
-
-  const seek = (t: number) => { if (videoRef.current) { videoRef.current.currentTime = t; setTime(t); } };
-
-  return (
-    <div className="editor">
-      <div className="preview">
-        {videoUrl && <video ref={videoRef} src={videoUrl} onTimeUpdate={e => setTime(e.currentTarget.currentTime)} controls />}
-        {active && (
-          <div className="subtitle-overlay" style={{
-            bottom: `${100 - style.posY}%`, textAlign: style.align,
-            fontFamily: style.fontFamily, fontSize: style.fontSize, fontWeight: style.weight,
-            color: style.color, WebkitTextStroke: `${style.outlineWidth}px ${style.outlineColor}`,
-            textShadow: style.shadow ? '2px 2px 6px rgba(0,0,0,0.8)' : 'none',
-            background: style.background || 'transparent', padding: style.background ? '4px 10px' : 0
-          }}>{active.text}</div>
-        )}
-      </div>
-      <div className="timeline">
-        {cues.map(c => (
-          <div key={c.id}
-            className={`cue ${c.id === selectedCueId ? 'selected' : ''}`}
-            style={{ left: `${(c.start / (videoRef.current?.duration || 1)) * 100}%`, width: `${((c.end - c.start) / (videoRef.current?.duration || 1)) * 100}%` }}
-            onClick={() => { select(c.id); seek(c.start); }}
-            title={`${formatTime(c.start)} → ${formatTime(c.end)}`}
-          >{c.text.slice(0, 30)}</div>
-        ))}
-      </div>
-      <div className="time">{formatTime(time)}</div>
-      {selected && (
-        <div className="panel">
-          <h3>Editar legenda</h3>
-          <textarea value={selected.text} onChange={e => updateCue(selected.id, { text: e.target.value })} />
-          <div className="row">
-            <label>Início (s)<input type="number" step="0.01" value={selected.start} onChange={e => updateCue(selected.id, { start: +e.target.value })} /></label>
-            <label>Fim (s)<input type="number" step="0.01" value={selected.end} onChange={e => updateCue(selected.id, { end: +e.target.value })} /></label>
-          </div>
-        </div>
-      )}
-      <div className="panel">
-        <h3>Estilo ({STYLES.length} disponíveis)</h3>
-        <select value={style.id} onChange={e => setStyle(STYLES.find(s => s.id === e.target.value)!) }>
-          {STYLES.map(s => <option key={s.id} value={s.id}>{s.category} — {s.name}</option>)}
-        </select>
-        <h3>Animação ({ANIMATIONS.length} disponíveis)</h3>
-        <select value={animation.id} onChange={e => setAnimation(ANIMATIONS.find(a => a.id === e.target.value)!) }>
-          {ANIMATIONS.map(a => <option key={a.id} value={a.id}>{a.type} — {a.name}</option>)}
-        </select>
-      </div>
-    </div>
-  );
+const motions=['Sem animação','Saltar','Pular','Cair','Deslizar','Aproximar','Pulsar'];
+export default function Editor(){
+ const s=useStore();
+ const video=useRef<HTMLVideoElement>(null);
+ const [time,setTime]=useState(0),[duration,setDuration]=useState(0);
+ const [tab,setTab]=useState('Texto'),[query,setQuery]=useState('');
+ const [x,setX]=useState(50),[motion,setMotion]=useState('Saltar'),[effectMs,setEffectMs]=useState(180);
+ const [mode,setMode]=useState('Realce ativo'),[rate,setRate]=useState(1),[group,setGroup]=useState(3);
+ const [playing,setPlaying]=useState(false);
+ useEffect(()=>{let frame=0;const tick=()=>{if(video.current)setTime(video.current.currentTime);frame=requestAnimationFrame(tick)};frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame)},[]);
+ useEffect(()=>{if(video.current)video.current.playbackRate=rate},[rate,s.videoUrl]);
+ const seek=(t:number)=>{if(video.current){video.current.currentTime=Math.max(0,Math.min(duration,t));setTime(video.current.currentTime)}};
+ const selected=s.cues.find(c=>c.id===s.selectedCueId);
+ const active=s.cues.filter(c=>time>=c.start&&time<c.end);
+ const categories=Array.from(new Set(STYLES.map(st=>st.category)));
+ const [category,setCategory]=useState('Todas');
+ const paint=(st:typeof s.style):React.CSSProperties=>({fontFamily:st.fontFamily,fontWeight:st.weight,color:st.color,WebkitTextStroke:`${st.outlineWidth}px ${st.outlineColor}`,paintOrder:'stroke fill',textShadow:st.shadow?'2px 3px 5px #000':'none',background:st.background||'transparent',textAlign:st.align});
+ const animated=(p:number):React.CSSProperties=>{const t=Math.min(1,Math.max(0,p));switch(motion){case 'Saltar':return{transform:`translateY(${-Math.sin(t*Math.PI)*16}px)`};case 'Pular':return{transform:`scale(${.7+.3*t+Math.sin(t*Math.PI)*.18})`};case 'Cair':return{transform:`translateY(${-(1-t)*(1-t)*45}px)`,opacity:t};case 'Deslizar':return{transform:`translateX(${(1-t)*35}px)`,opacity:t};case 'Aproximar':return{transform:`scale(${.6+.4*t})`,opacity:t};case 'Pulsar':return{transform:`scale(${1+Math.sin(t*Math.PI)*.12})`};default:return {}}};
+ return <div className="editor"><div className="stage"><video ref={video} src={s.videoUrl||undefined} playsInline onLoadedMetadata={e=>{setDuration(e.currentTarget.duration);e.currentTarget.playbackRate=rate}} onPlay={()=>setPlaying(true)} onPause={()=>setPlaying(false)} onEnded={()=>setPlaying(false)}/><div className="caption-plane">{active.map(c=>{const words=c.text.trim().split(/\s+/);const span=c.end-c.start;const index=Math.min(words.length-1,Math.floor((time-c.start)/span*words.length));const first=mode==='Blocos'?Math.floor(index/group)*group:0;const shown=mode==='Palavra'?words.slice(index,index+1):mode==='Blocos'?words.slice(first,first+group):words;const origin=mode==='Palavra'?index:first;return <div key={c.id} className="live-caption" style={{...paint(s.style),left:x+'%',top:s.style.posY+'%',fontSize:`${s.style.fontSize/7.2}cqw`}}>{shown.map((word,i)=>{const n=origin+i;const start=c.start+span*n/words.length;const on=n===index;return <span key={n} style={{display:'inline-block',marginRight:'.25em',color:mode==='Realce ativo'&&on?s.style.highlightColor:undefined,...animated((time-(mode==='Frase'?c.start:start))/(effectMs/1000))}}>{word}</span>})}</div>})}</div></div>
+ <div className="transport"><button onClick={()=>seek(time-1)}>−1 s</button><button onClick={()=>{if(!video.current)return;if(video.current.paused)video.current.play().catch(()=>setPlaying(false));else video.current.pause()}}>{playing?'Pausar':'Reproduzir'}</button><button onClick={()=>seek(time+1)}>+1 s</button><small>{formatTime(time)} / {formatTime(duration)}</small></div>
+ <input aria-label="Posição no vídeo" type="range" min={0} max={duration||1} step={.001} value={time} onChange={e=>seek(+e.target.value)}/><div className="timeline">{s.cues.map(c=><button key={c.id} className={'cue '+(selected?.id===c.id?'selected':'')} style={{left:c.start/(duration||1)*100+'%',width:(c.end-c.start)/(duration||1)*100+'%'}} onClick={()=>{s.select(c.id);seek(c.start)}}>{c.text}</button>)}</div>
+ <nav className="tool-tabs">{['Texto','Estilos','Animações','Ritmo'].map(t=><button aria-pressed={tab===t} key={t} onClick={()=>setTab(t)}>{t}</button>)}</nav><section className="panel">
+ {tab==='Texto'&&<><h3>Tamanho e posição — todas as legendas</h3><label>Tamanho: {s.style.fontSize}<input type="range" min={14} max={100} value={s.style.fontSize} onChange={e=>s.setStyle({...s.style,fontSize:+e.target.value})}/></label><label>Horizontal: {x}%<input type="range" min={10} max={90} value={x} onChange={e=>setX(+e.target.value)}/></label><label>Vertical: {s.style.posY}%<input type="range" min={10} max={90} value={s.style.posY} onChange={e=>s.setStyle({...s.style,posY:+e.target.value})}/></label><label>Cor<input type="color" value={s.style.color} onChange={e=>s.setStyle({...s.style,color:e.target.value})}/></label>{selected?<><h3>Legenda selecionada</h3><textarea value={selected.text} onChange={e=>s.updateCue(selected.id,{text:e.target.value})}/><label>Início (segundos)<input type="number" step={.001} min={0} value={selected.start} onChange={e=>{const v=+e.target.value;if(v>=0&&v<selected.end)s.updateCue(selected.id,{start:v})}}/></label><label>Fim (segundos)<input type="number" step={.001} value={selected.end} onChange={e=>{const v=+e.target.value;if(v>selected.start)s.updateCue(selected.id,{end:v})}}/></label></>:<p>Toque num bloco da linha temporal para editar o texto e os tempos.</p>}</>}
+ {tab==='Estilos'&&<><h3>Biblioteca visual de estilos</h3><input placeholder="Pesquisar estilos" value={query} onChange={e=>setQuery(e.target.value)}/><select value={category} onChange={e=>setCategory(e.target.value)}><option>Todas</option>{categories.map(c=><option key={c}>{c}</option>)}</select><div className="style-grid">{STYLES.filter(st=>(category==='Todas'||st.category===category)&&st.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(st=><button key={st.id} className="style-card" aria-pressed={s.style.id===st.id} onClick={()=>s.setStyle(st)}><span className="style-example" style={paint(st)}>A SUA <em style={{color:st.highlightColor}}>HISTÓRIA</em></span><strong>{st.name}</strong><small>{st.category}</small></button>)}</div><p>Miniaturas renderizadas com as cores, contorno e fonte configurados; não são imagens genéricas.</p></>}
+ {tab==='Animações'&&<><h3>Animações da pré-visualização</h3><div className="motion-grid">{motions.map(m=><button aria-pressed={m===motion} key={m} onClick={()=>setMotion(m)}>{m}</button>)}</div><label>Duração do efeito: {effectMs} ms<input type="range" min={70} max={600} step={10} value={effectMs} onChange={e=>setEffectMs(+e.target.value)}/></label><p>Estas seis animações têm comportamento implementado na prévia. O catálogo anterior de 120 nomes não representa 120 efeitos funcionais.</p></>}
+ {tab==='Ritmo'&&<><h3>Ritmo ligado ao tempo do vídeo</h3><label>Apresentação<select value={mode} onChange={e=>setMode(e.target.value)}>{['Frase','Realce ativo','Palavra','Blocos'].map(m=><option key={m}>{m}</option>)}</select></label><label>Palavras por bloco: {group}<input type="range" min={1} max={6} value={group} onChange={e=>setGroup(+e.target.value)}/></label><label>Velocidade da prévia: {rate}×<input type="range" min={.5} max={2} step={.05} value={rate} onChange={e=>setRate(+e.target.value)}/></label><p>Vídeo e legendas usam o mesmo relógio. A velocidade altera a reprodução, não os timestamps originais. Os tempos de palavras são estimados uniformemente dentro de cada legenda SRT; isto não é alinhamento com a fala. Estes ajustes não são aplicados à exportação básica.</p></>}
+ </section></div>;
 }
