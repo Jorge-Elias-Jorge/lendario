@@ -1,0 +1,17 @@
+* { box-sizing: border-box; margin: 0; }
+body { font-family: system-ui, sans-serif; }
+.app.dark { background: #121212; color: #eee; min-height: 100vh; padding: 16px; }
+.app.light { background: #f5f5f5; color: #222; min-height: 100vh; padding: 16px; }
+header { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+.panel { background: rgba(128,128,128,0.1); border-radius: 12px; padding: 12px; margin: 12px 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+button, .filebtn { background: #6C5CE7; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+textarea, select, input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #888; background: transparent; color: inherit; }
+.preview { position: relative; max-width: 720px; }
+.preview video { width: 100%; border-radius: 12px; }
+.subtitle-overlay { position: absolute; left: 0; right: 0; padding: 0 16px; pointer-events: none; }
+.timeline { position: relative; height: 60px; background: rgba(128,128,128,0.15); border-radius: 8px; margin: 12px 0; overflow: hidden; }
+.cue { position: absolute; top: 8px; height: 44px; background: #6C5CE7; color: white; font-size: 11px; padding: 4px; border-radius: 4px; overflow: hidden; cursor: pointer; }
+.cue.selected { background: #FF3D00; }
+.errors { color: #FF5252; font-size: 12px; }
+.empty { padding: 40px; text-align: center; opacity: 0.7; }
