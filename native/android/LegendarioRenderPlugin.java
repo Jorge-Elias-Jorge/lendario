@@ -245,7 +245,7 @@ public class LegendarioRenderPlugin extends Plugin {
     private byte[] bitmapToNv12(Bitmap bitmap) {
         int width = bitmap.getWidth(), height = bitmap.getHeight();
         int[] pixels = new int[width * height];
-        bitmap.getPixels(pixels, 0, width, 0, width, height);
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
         byte[] result = new byte[width * height * 3 / 2];
         for (int row = 0; row < height; row++) for (int column = 0; column < width; column++) {
             int pixel = pixels[row * width + column];
