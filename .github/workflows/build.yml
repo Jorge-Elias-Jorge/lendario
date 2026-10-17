@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,20 +22,28 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
       - name: Instalar dependências
-        run: npm install
+        run: |
+          npm install
+          npm install --save @capacitor/core@^6
+          npm install --save-dev @capacitor/cli@^6 @capacitor/android@^6
       - name: Compilar recursos locais
-        run: npm run build
-      - name: Gerar projeto Android
-        run: npx cap add android
-      - name: Sincronizar recursos Android
-        run: npx cap sync android
+        run: |
+          if grep -q '"build"' package.json; then npm run build; else npx vite build; fi
+      - name: Gerar ou reutilizar projeto Android
+        run: |
+          if [ ! -f android/variables.gradle ]; then npx cap add android; fi
+          npx cap sync android
       - name: Instalar módulos nativos LEGENDÁRIO
         run: python3 scripts/install_native.py
+      - name: Preparar SDK Android
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" > /dev/null
       - name: Compilar APK debug instalável
         working-directory: android
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
