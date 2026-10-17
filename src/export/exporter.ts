@@ -11,11 +11,18 @@ const pickMime=()=>{
  return '';
 };
 
-export interface ExportOptions{presentation?:string;effectMs?:number}
+export type ExportQuality='alta'|'ultra';
+
+export interface ExportOptions{presentation?:string;effectMs?:number;quality?:ExportQuality}
+
+const qualitySettings=(quality:ExportQuality)=>quality==='ultra'
+ ?{crf:'16',preset:'slow',audioBitrate:'256k'}
+ :{crf:'18',preset:'medium',audioBitrate:'192k'};
 
 export async function exportVideo(videoFile:File,cues:Cue[],style:SubtitleStyle,onProgress?:(p:number)=>void,options?:ExportOptions):Promise<Blob>{
  const mime=pickMime();
  if(!mime)throw new Error('Este dispositivo não suporta a gravação necessária para exportar.');
+ const quality=options?.quality??'alta';
  const video=document.createElement('video');
  video.src=URL.createObjectURL(videoFile);
  video.muted=false;
@@ -35,7 +42,7 @@ export async function exportVideo(videoFile:File,cues:Cue[],style:SubtitleStyle,
  }catch{
   audioCtx=null;
  }
- const rec=new MediaRecorder(stream,{mimeType:mime});
+ const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:quality==='ultra'?12000000:8000000,audioBitsPerSecond:quality==='ultra'?256000:192000});
  const chunks:Blob[]=[];
  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
  const stopped=new Promise<void>(r=>rec.onstop=()=>r());
@@ -64,8 +71,9 @@ export async function exportVideo(videoFile:File,cues:Cue[],style:SubtitleStyle,
    coreURL:await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js','text/javascript'),
    wasmURL:await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm','application/wasm')
   });
+  const settings=qualitySettings(quality);
   await ffmpeg.writeFile('in.webm',await fetchFile(webm));
-  await ffmpeg.exec(['-i','in.webm','-c:v','libx264','-preset','veryfast','-c:a','aac','-shortest','out.mp4']);
+  await ffmpeg.exec(['-i','in.webm','-c:v','libx264','-preset',settings.preset,'-crf',settings.crf,'-pix_fmt','yuv420p','-c:a','aac','-b:a',settings.audioBitrate,'-shortest','out.mp4']);
   const data=await ffmpeg.readFile('out.mp4');
   return new Blob([data],{type:'video/mp4'});
  }catch{
