@@ -66,6 +66,29 @@ public class LegendarioMediaPlugin extends Plugin {
    JSObject result=new JSObject();result.put("items",items);result.put("more",more);call.resolve(result);
   }catch(Exception e){call.reject("Não foi possível consultar a biblioteca. Verifique as permissões.",e);}
  });}
+ private void copy(Uri uri,File dest)throws IOException{
+  try(InputStream in=getContext().getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(dest)){
+   if(in==null)throw new IOException("Ficheiro inacessível.");
+   byte[] buffer=new byte[65536];int count;
+   while((count=in.read(buffer))!=-1)out.write(buffer,0,count);
+  }
+ }
+ @PluginMethod public void previewVideo(PluginCall call){worker.execute(()->{
+  File dest=null;
+  try{
+   Uri uri=Uri.parse(call.getString("uri",""));
+   if(!"content".equals(uri.getScheme()) || !"media".equals(uri.getAuthority()))throw new IOException("URI fora da biblioteca de média.");
+   String mime=getContext().getContentResolver().getType(uri);
+   if(mime==null || !mime.startsWith("video/"))throw new IOException("Selecione um vídeo.");
+   File dir=new File(getContext().getCacheDir(),"previews");
+   File[] old=dir.listFiles();if(old!=null)for(File f:old)f.delete();
+   if(!dir.exists()&&!dir.mkdirs())throw new IOException("Armazenamento indisponível.");
+   String ext=MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);if(ext==null)ext="mp4";
+   dest=File.createTempFile("preview-","."+ext,dir);
+   copy(uri,dest);
+   JSObject result=new JSObject();result.put("path",Uri.fromFile(dest).toString());call.resolve(result);
+  }catch(Exception e){if(dest!=null)dest.delete();call.reject("Não foi possível pré-visualizar: verifique o espaço e a permissão.",e);}
+ });}
  @PluginMethod public void importVideo(PluginCall call){worker.execute(()->{
   File dest=null;
   try{
@@ -76,10 +99,7 @@ public class LegendarioMediaPlugin extends Plugin {
    File dir=new File(getContext().getFilesDir(),"imports");if(!dir.exists()&&!dir.mkdirs())throw new IOException("Armazenamento indisponível.");
    String ext=MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);if(ext==null)ext="mp4";
    dest=File.createTempFile("video-","."+ext,dir);
-   try(InputStream in=getContext().getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(dest)){
-    if(in==null)throw new IOException("Vídeo inacessível.");byte[] buffer=new byte[65536];int count;
-    while((count=in.read(buffer))!=-1)out.write(buffer,0,count);
-   }
+   copy(uri,dest);
    JSObject result=new JSObject();result.put("path",Uri.fromFile(dest).toString());call.resolve(result);
   }catch(Exception e){if(dest!=null)dest.delete();call.reject("Falha ao importar: verifique o espaço e a permissão.",e);}
  });}

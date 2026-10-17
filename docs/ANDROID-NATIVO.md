@@ -1,24 +1,37 @@
-# Galeria Android e rascunhos: lote inicial
+# Galeria Android, rascunhos e legendas
 
-A interface React/Capacitor permanece híbrida. O plugin LegendarioMedia é Java nativo e integra MediaStore, permissões e ficheiros privados.
+A interface React/Capacitor permanece híbrida. O plugin LegendarioMedia é Java nativo e integra MediaStore, permissões, pré-visualização e ficheiros privados.
 
-## Incluído
-- Acesso total/parcial/recusado e re-seleção de permissões; não usa MANAGE_EXTERNAL_STORAGE.
-- Listagem de fotos e vídeos por páginas de até 24 itens, com thumbnails reduzidas em Android 10+.
-- Importação de vídeo em streaming para ficheiro privado, sem upload e sem alterar o original. Requer espaço adicional equivalente ao vídeo escolhido.
-- Rascunhos JSON nativos com AtomicFile e recuperação por identificador; listagem, abertura e eliminação.
-- Autosave de texto SRT importado, tempos, estilo e animação do store após 400 ms de inatividade; gravação ao sair do editor ou ocultar a página, sem garantia absoluta contra morte imediata do processo.
-- Projetos localStorage anteriores mantidos e disponíveis para migração ao voltar a escolher o vídeo.
-- Build injeta o plugin e permissões depois de cap sync. Não substitui MainActivity se já contiver onCreate personalizado.
+## Galeria e pré-visualização
+- Acesso total, parcial ou recusado, com re-seleção de permissões; não usa MANAGE_EXTERNAL_STORAGE.
+- Listagem por páginas de até 24 itens, com miniaturas reduzidas em Android 10+.
+- Toque no vídeo abre uma pré-visualização real: o plugin copia o vídeo para a cache e devolve um caminho reproduzível.
+- A importação para o projeto só acontece após “Usar este vídeo”. “Cancelar” não importa nada.
+- Limite temporário: confirmar a pré-visualização copia o vídeo novamente para o armazenamento privado. A cópia da cache é limpa na próxima pré-visualização.
 
-## Limites explícitos
-- Fotos são apenas consultadas; não viram projetos de vídeo.
-- Eliminar rascunho não elimina a cópia privada importada nesta primeira integração, para não apagar média indevidamente. É necessária gestão futura de cópias órfãs.
-- Importação não tem cancelamento nem progresso percentual; a interface mostra estado ocupado. Sem integração de exportação nativa: exportação fica desativada para vídeos da biblioteca, em vez de fingir funcionar.
-- Configurações locais do Editor (horizontal, duração, modo por palavra, velocidade) ainda não estão no store e não são recuperadas. O SRT original bruto não é preservado separadamente do texto parseado.
-- Permissão só é solicitada após o utilizador tocar na explicação da primeira abertura ou na galeria, não durante a instalação.
-- Modelos de alinhamento forçado/IA e catálogo com mais de 100 animações reais continuam não implementados. Não contam como parte funcional deste lote.
-- Sem migração para Kotlin/Compose e sem alteração de CaptionDesigner, biblioteca de estilos ou lógica de efeitos.
+## Rascunhos
+- Gravação automática de texto, tempos, estilo e animação após 400 ms de inatividade; também ao sair do editor ou ocultar a aplicação.
+- Rascunhos em JSON com AtomicFile; listagem, reabertura e eliminação.
+- Projetos localStorage anteriores permanecem acessíveis para migração.
 
-## Testes necessários no APK
-Negar/permissão parcial/permissão total, revogar permissão, voltar à aplicação, carregar páginas, importar vídeo grande e ficheiro incompatível, espaço insuficiente, guardar/reabrir após terminar processo, apagar rascunho, migrar projeto antigo. Testar Android 12, 13 e 14+. Não declarar testes nativos executados antes de compilar e correr no dispositivo.
+## Legendas
+- Biblioteca com 30 estilos em nove categorias: Virais, Neon e luzes, Karaoke, Contorno forte, Minimalistas, Gradientes, Cinema, Glitch e 3D.
+- Cor das letras e cor do contorno são configuráveis separadamente, com espessura ajustável.
+- Modo “Frase” apresenta o texto numa só cor, sem acompanhar palavra por palavra.
+- “Sem animação” está disponível em qualquer estilo.
+- Os cartões de estilo e de animação movem-se na prévia para o usuário ver o efeito antes de escolher.
+- A personalização está integrada na biblioteca de estilos; não há botão separado.
+
+## Correção do SRT
+- “Substituir legendas” limpa o texto anterior antes de aplicar o novo SRT.
+- Cada legenda recebe um identificador novo e estável.
+- Tempos inválidos e sobreposições são normalizados automaticamente.
+- No editor, apenas a legenda mais recente de uma faixa sobreposta é mostrada, eliminando texto duplicado.
+- O botão “Corrigir sobreposições” resolve conflitos de tempos num toque.
+
+## Limites atuais
+- A exportação não incorpora as novas animações nem preserva o áudio.
+- Não há análise acústica nem alinhamento forçado.
+- Configurações locais do Editor ainda não são recuperadas pelo rascunho.
+- Fotos são apenas consultadas; não geram projetos de vídeo.
+- Testes de dispositivo continuam necessários: permissões, pré-visualização, importação, espaço insuficiente, rotação de ecrã e recuperação de rascunhos.

@@ -1,55 +1,44 @@
-import React, { useState } from 'react';
-import { parseSRT } from '../core/srt';
-import { useStore } from '../store';
+import React,{useState} from 'react';
+import {useStore} from '../store';
+import type {Cue} from '../core/srt';
 
-export default function SrtImporter() {
-  const [text, setText] = useState('');
-  const [errors, setErrors] = useState<string[]>([]);
-  const [message, setMessage] = useState('');
-  const [preview, setPreview] = useState(false);
-  const cues = useStore(s => s.cues);
-  const setCues = useStore(s => s.setCues);
-  const select = useStore(s => s.select);
-  const result = parseSRT(text);
-  const change = (value: string) => { setText(value); setMessage(''); setErrors([]); setPreview(false); };
-  const validate = () => {
-    const r = parseSRT(text);
-    setErrors(r.errors);
-    setMessage(r.errors.length ? 'Corrija os erros antes de aplicar.' : `${r.cues.length} legendas válidas. Confirme abaixo para aplicar.`);
-  };
-  const apply = (mode: 'add' | 'replace') => {
-    const r = parseSRT(text);
-    setErrors(r.errors);
-    if (r.errors.length || !r.cues.length) { setMessage('Importação não aplicada. Corrija o SRT.'); return; }
-    const next = mode === 'add' ? [...cues, ...r.cues] : r.cues;
-    setCues(next.sort((a,b) => a.start - b.start));
-    select(r.cues[0].id);
-    setMessage(`${r.cues.length} legendas aplicadas. Na linha temporal, toque na primeira legenda para ir ao seu início e reproduza o vídeo.`);
-  };
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    try { change((await f.text()).replace(/^\uFEFF/, '')); }
-    catch { setMessage('Não foi possível ler o ficheiro. Selecione-o novamente.'); }
-    e.target.value = '';
-  };
-  return <section className="panel">
-    <h3>Importar legendas SRT</h3>
-    <p>Selecione um vídeo e importe as legendas. O texto aparece apenas nos intervalos definidos no SRT.</p>
-    <textarea aria-label="Texto SRT" rows={8} value={text} onChange={e => change(e.target.value)} placeholder={'1\n00:00:01,000 --> 00:00:04,000\nA sua legenda aqui.'} />
-    <div className="row">
-      <button onClick={async () => { try { change(await navigator.clipboard.readText()); } catch { setMessage('Não foi possível aceder à área de transferência. Mantenha pressionada a caixa e escolha Colar.'); } }}>Colar texto</button>
-      <label className="filebtn">Importar ficheiro<input type="file" accept=".srt,text/plain,application/x-subrip" onChange={handleFile} hidden /></label>
-      <button onClick={validate}>Validar SRT</button>
-      <button onClick={() => { validate(); setPreview(true); }}>Pré-visualizar</button>
-    </div>
-    {message && <p role="status" className="notice">{message}</p>}
-    {errors.length > 0 && <ul role="alert" className="errors">{errors.map((e,i) => <li key={i}>{e}</li>)}</ul>}
-    {preview && <ol className="srt-preview">{result.cues.slice(0,100).map(c => <li key={c.id}><small>{c.start.toFixed(3)} s → {c.end.toFixed(3)} s</small><br/>{c.text}</li>)}</ol>}
-    <div className="row">
-      <button disabled={!result.cues.length || result.errors.length > 0} onClick={() => apply('add')}>Adicionar ao projeto</button>
-      {cues.length > 0 && <button disabled={!result.cues.length || result.errors.length > 0} onClick={() => { if (window.confirm('Substituir todas as legendas atuais pelas legendas deste SRT?')) apply('replace'); }}>Substituir legendas atuais</button>}
-      <button onClick={() => change('')}>Limpar importação</button>
-    </div>
-  </section>;
+const toSeconds=(v:string)=>{const m=v.trim().match(/(\d+):(\d+):(\d+)[,.](\d+)/);if(!m)return null;return +m[1]*3600+ +m[2]*60+ +m[3]+ +m[4].padEnd(3,'0').slice(0,3)/1000;};
+
+export function parseSrtText(raw:string):Cue[]{
+ const cues:Cue[]=[];
+ for(const block of raw.replace(/\r/g,'').split(/\n\s*\n/)){
+  const lines=block.split('\n').filter(l=>l.trim()!=='');
+  if(!lines.length)continue;
+  let i=0;
+  if(/^\d+$/.test(lines[0].trim()))i=1;
+  const times=lines[i]?.match(/(\d+:\d+:\d+[,.]\d+)\s*-->\s*(\d+:\d+:\d+[,.]\d+)/);
+  if(!times)continue;
+  const start=toSeconds(times[1]),end=toSeconds(times[2]);
+  const text=lines.slice(i+1).join(' ').trim();
+  if(start!==null&&end!==null&&text&&end>start)cues.push({id:crypto.randomUUID(),start,end,text});
+ }
+ cues.sort((a,b)=>a.start-b.start);
+ let previous=0;
+ for(const cue of cues){
+  if(cue.start<previous)cue.start=previous;
+  if(cue.end<=cue.start)cue.end=cue.start+0.5;
+  previous=cue.end;
+ }
+ return cues;
+}
+
+export default function SrtImporter(){
+ const s=useStore();
+ const [text,setText]=useState(''),[message,setMessage]=useState('');
+ const apply=(replace:boolean)=>{
+  const parsed=parseSrtText(text);
+  if(!parsed.length){setMessage('Não foi possível ler legendas válidas. Confirme o formato SRT.');return;}
+  if(replace){s.setCues(parsed);s.select(null);setMessage(`${parsed.length} legendas aplicadas. O texto anterior foi substituído e as sobreposições corrigidas.`);}
+  else{const base=s.cues.length?s.cues[s.cues.length-1].end:0;const shifted=parsed.map(c=>({...c,id:crypto.randomUUID(),start:c.start+base,end:c.end+base}));s.setCues([...s.cues,...shifted]);setMessage(`${parsed.length} legendas adicionadas após a última.`);}
+ };
+ return <section className="panel"><h3>Texto SRT</h3><p>“Substituir legendas” limpa o texto anterior e corrige tempos sobrepostos automaticamente.</p>
+ <textarea rows={8} value={text} onChange={e=>setText(e.target.value)} placeholder={'1\n00:00:01,000 --> 00:00:03,000\nO seu texto aqui'}/>
+ <div className="row"><button onClick={()=>apply(true)}>Substituir legendas</button><button onClick={()=>apply(false)}>Adicionar ao fim</button><button onClick={()=>{setText('');setMessage('')}}>Limpar caixa</button></div>
+ <label className="filebtn">Importar ficheiro .srt<input hidden type="file" accept=".srt,text/plain" onChange={e=>{const f=e.target.files?.[0];if(!f)return;f.text().then(t=>{setText(t);setMessage('Ficheiro carregado. Toque em “Substituir legendas”.');});}}/></label>
+ {message&&<p role="status">{message}</p>}</section>;
 }
