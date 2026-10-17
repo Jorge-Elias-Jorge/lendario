@@ -27,9 +27,11 @@ export default function CaptionDesigner(){
  <label>Contorno: {st.outlineWidth||0}px<input type="range" min={0} max={8} value={st.outlineWidth||0} onChange={e=>set({outlineWidth:+e.target.value})}/></label>
  <label>Brilho / luz<input type="color" value={st.glow||'#ffffff'} onChange={e=>set({glow:e.target.value})}/></label>
  <div className="row"><button onClick={()=>set({glow:undefined})}>Remover brilho</button><button onClick={()=>set({shadow:!st.shadow})}>{st.shadow?'Remover sombra':'Adicionar sombra'}</button><button onClick={()=>set({uppercase:!st.uppercase})}>{st.uppercase?'Letras normais':'MAIÚSCULAS'}</button></div>
+ <label>Alinhamento<select value={st.align||'center'} onChange={e=>set({align:e.target.value as Look['align']})}><option value="center">Centralizado</option><option value="left">À esquerda</option><option value="right">À direita</option><option value="misto">Misto — linhas equilibradas</option></select></label>
+ <label>Linhas máximas: {st.maxLines??2}<input type="range" min={1} max={3} value={st.maxLines??2} onChange={e=>set({maxLines:+e.target.value})}/></label>
  <label>Tamanho: {st.fontSize}<input type="range" min={14} max={100} value={st.fontSize} onChange={e=>set({fontSize:+e.target.value})}/></label>
  <label>Posição vertical: {st.posY}%<input type="range" min={10} max={90} value={st.posY} onChange={e=>set({posY:+e.target.value})}/></label>
  <label>Animação<select value={st.defaultMotion||'Sem animação'} onChange={e=>set({defaultMotion:e.target.value})}>{MOTIONS.map(m=><option key={m}>{m}</option>)}</select></label>
- <p>Para uma legenda estática de cor única: escolha a cor, remova o brilho e selecione “Sem animação”.</p>
+ <p>Textos longos são divididos automaticamente em até 3 linhas equilibradas, ideais para Shorts.</p>
  </section>;
 }

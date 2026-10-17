@@ -8,9 +8,11 @@ export interface SubtitleStyle{
  shadow?:boolean;glow?:string;
  uppercase?:boolean;
  defaultMotion?:string;
+ align?:'center'|'left'|'right'|'misto';
+ maxLines?:number;
 }
 
-const base={fontSize:44,posY:78,fontWeight:800};
+const base:Partial<SubtitleStyle>={fontSize:44,posY:78,fontWeight:800,align:'center',maxLines:2};
 
 export const STYLES:SubtitleStyle[]=[
  {id:'branco-simples',name:'Branco simples',category:'Minimalistas',color:'#FFFFFF',highlightColor:'#FFFFFF',...base,defaultMotion:'Sem animação'},
