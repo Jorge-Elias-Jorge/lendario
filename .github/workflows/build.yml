@@ -25,6 +25,7 @@ jobs:
         with:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: true
+          packages: platform-tools
       - name: Instalar dependências
         run: |
           npm install
