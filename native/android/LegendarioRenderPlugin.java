@@ -23,6 +23,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 @CapacitorPlugin(name = "LegendarioRender")
@@ -196,7 +197,7 @@ public class LegendarioRenderPlugin extends Plugin {
         }
     }
 
-    private void parseStyle(JSObject object, String presentation, int effectMs) {
+    private void parseStyle(JSObject object, String presentation, int effectMs) throws JSONException {
         if (object != null) {
             style.fontSize = object.has("fontSize") ? object.getInt("fontSize") : 44;
             style.posY = object.has("posY") ? object.getInt("posY") : 78;
