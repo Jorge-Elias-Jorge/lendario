@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 root=Path(__file__).resolve().parents[1]
 java=root/'android/app/src/main/java/com/legendario/editor'
 java.mkdir(parents=True,exist_ok=True)
-for plugin in ['LegendarioMediaPlugin','LegendarioExportPlugin']:
+for plugin in ['LegendarioMediaPlugin','LegendarioExportPlugin','LegendarioRenderPlugin']:
     shutil.copyfile(root/('native/android/'+plugin+'.java'),java/(plugin+'.java'))
 activity=java/'MainActivity.java'
 text=activity.read_text()
@@ -14,11 +14,12 @@ if 'registerPlugin(LegendarioMediaPlugin.class)' not in text:
         raise RuntimeError('MainActivity já contém onCreate. Integrar sem substituir código existente.')
     text=text.replace('import com.getcapacitor.BridgeActivity;', 'import com.getcapacitor.BridgeActivity;\nimport android.os.Bundle;')
     text=text.replace('extends BridgeActivity {','extends BridgeActivity {\n  @Override public void onCreate(Bundle savedInstanceState) {\n    registerPlugin(LegendarioMediaPlugin.class);\n    super.onCreate(savedInstanceState);\n  }')
-if 'registerPlugin(LegendarioExportPlugin.class)' not in text:
+for plugin in ['LegendarioExportPlugin','LegendarioRenderPlugin']:
     marker='registerPlugin(LegendarioMediaPlugin.class);'
-    if marker not in text:
-        raise RuntimeError('Registo do plugin de mídia não encontrado.')
-    text=text.replace(marker,marker+'\n    registerPlugin(LegendarioExportPlugin.class);')
+    if 'registerPlugin('+plugin+'.class)' not in text:
+        if marker not in text:
+            raise RuntimeError('Registo do plugin de mídia não encontrado.')
+        text=text.replace(marker,marker+'\n    registerPlugin('+plugin+'.class);')
 activity.write_text(text)
 manifest=root/'android/app/src/main/AndroidManifest.xml'
 ET.register_namespace('android','http://schemas.android.com/apk/res/android')
