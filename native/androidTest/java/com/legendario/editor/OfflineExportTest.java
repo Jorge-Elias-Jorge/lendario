@@ -248,4 +248,61 @@ public class OfflineExportTest {
             return value;
         }
     }
+
+    @Test public void portugueseAudioProducesWordTimesWithoutInternet()throws Exception{
+        Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertEquals(android.content.pm.PackageManager.PERMISSION_DENIED,context.checkSelfPermission(android.Manifest.permission.INTERNET));
+        File input=fixture("speech-pt.mp4");
+        try{
+            JSONObject result=LegendarioSpeechEngine.transcribe(context,input,new java.util.concurrent.atomic.AtomicBoolean(false),(fraction,stage)->{});
+            JSONArray words=result.getJSONArray("words");
+            assertEquals("vosk-pt-0.3",result.getString("engine"));
+            assertTrue("O motor deve reconhecer alguma fala real no fixture",words.length()>0);
+            assertTrue(result.getDouble("duration")>=11);
+            double previous=0;
+            for(int i=0;i<words.length();i++){
+                JSONObject word=words.getJSONObject(i);
+                assertTrue(word.getDouble("start")>=previous-.001);
+                assertTrue(word.getDouble("end")>word.getDouble("start"));
+                assertTrue(word.getDouble("end")<12.1);
+                previous=word.getDouble("end");
+            }
+            assertTrue("Não deve deslocar a fala para o início, removendo os 2s de silêncio",words.getJSONObject(0).getDouble("start")>=1.7);
+        }finally{input.delete();}
+    }
+    @Test public void videoWithoutAudioIsNotPretendedToBeAligned()throws Exception{
+        File input=fixture("silent.mp4");
+        try{
+            try{
+                LegendarioSpeechEngine.transcribe(InstrumentationRegistry.getInstrumentation().getTargetContext(),input,new java.util.concurrent.atomic.AtomicBoolean(false),(f,s)->{});
+                fail("Um vídeo sem áudio deve ser recusado.");
+            }catch(IOException expected){assertTrue(expected.getMessage().contains("faixa de áudio"));}
+        }finally{input.delete();}
+    }
+    @Test public void speechCancellationDoesNotGenerateAResult()throws Exception{
+        File input=fixture("speech-pt.mp4");
+        try{
+            try{
+                LegendarioSpeechEngine.transcribe(InstrumentationRegistry.getInstrumentation().getTargetContext(),input,new java.util.concurrent.atomic.AtomicBoolean(true),(f,s)->{});
+                fail("Cancelamento deve interromper o motor.");
+            }catch(java.util.concurrent.CancellationException expected){}
+        }finally{input.delete();}
+    }
+    @Test public void androidOverlayFollowsUnevenWordTimestamps()throws Exception{
+        Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        JSONArray sequence=new JSONArray("[{\"start\":0,\"end\":10,\"text\":\"cada palavra conta\",\"words\":[{\"text\":\"cada\",\"start\":0,\"end\":1},{\"text\":\"palavra\",\"start\":1,\"end\":2},{\"text\":\"conta\",\"start\":7,\"end\":10}]}]");
+        LegendarioCaptionOverlay actual=new LegendarioCaptionOverlay(sequence,style(),"Palavra",300,context);
+        actual.configure(new Size(320,240));
+        try{
+            for(int i=0;i<2;i++){
+                String word=i==0?"palavra":"conta";long time=i==0?1_500_000:8_000_000;
+                LegendarioCaptionOverlay expected=new LegendarioCaptionOverlay(new JSONArray().put(new JSONObject().put("start",0).put("end",10).put("text",word)),style(),"Frase",300,context);
+                expected.configure(new Size(320,240));
+                try{
+                    Bitmap a=actual.getBitmap(time),b=expected.getBitmap(time);
+                    assertTrue("A palavra mostrada não corresponde ao tempo acústico: "+word,a.sameAs(b));
+                }finally{expected.release();}
+            }
+        }finally{actual.release();}
+    }
 }

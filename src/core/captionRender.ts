@@ -1,6 +1,7 @@
 import type {Cue} from './srt';
 import type {SubtitleStyle} from '../data/styles';
 import {clamp,identity,motionAt,tracksFor,type MotionFrame,type MotionTiming} from './motion';
+import {wordState} from './alignment';
 interface Word{text:string;index:number;charIndex:number}
 export function drawCaption(ctx:CanvasRenderingContext2D,cue:Cue,style:SubtitleStyle,time:number,width:number,height:number,options?:{presentation?:string;effectMs?:number}){
  const scale=width/720,span=Math.max(.001,cue.end-cue.start),elapsed=time-cue.start;
@@ -9,15 +10,15 @@ export function drawCaption(ctx:CanvasRenderingContext2D,cue:Cue,style:SubtitleS
  let charIndex=0;
  const all:Word[]=text.trim().split(/\s+/).filter(Boolean).map((text,index)=>{const w={text,index,charIndex};charIndex+=Array.from(text).length;return w;});
  if(!all.length)return;
- const totalChars=Math.max(1,charIndex),active=Math.min(all.length-1,Math.floor(elapsed/span*all.length)),wordProgress=clamp(elapsed/span*all.length-active);
+ const totalChars=Math.max(1,charIndex),state=wordState(cue,time),active=state.index,wordProgress=state.progress;
  const presentation=options?.presentation??style.presentation??'Frase';
  let words=all;
  if(presentation==='Palavra')words=[all[active]];
  if(presentation==='Blocos'){const size=Math.max(1,Math.min(8,style.blockSize??3)),first=Math.floor(active/size)*size;words=all.slice(first,first+size);}
  const tracks=tracksFor(style,options?.effectMs??300);
  const timing=(word:Word=all[0],charOffset=0,lineIndex=0,lineCount=1):MotionTiming=>({
-  elapsed,remaining:span-elapsed,span,wordStart:word.index/all.length*span,wordDuration:span/all.length,
-  charStart:(word.charIndex+charOffset)/totalChars*span,lineStart:lineIndex/lineCount*span,seed:word.index+charOffset*.37,active:word.index===active
+  elapsed,remaining:span-elapsed,span,wordStart:state.words?state.words[word.index].start-cue.start:word.index/all.length*span,wordDuration:state.words?state.words[word.index].end-state.words[word.index].start:span/all.length,
+  charStart:state.words?state.words[word.index].start-cue.start+charOffset/Math.max(1,Array.from(word.text).length)*(state.words[word.index].end-state.words[word.index].start):(word.charIndex+charOffset)/totalChars*span,lineStart:lineIndex/lineCount*span,seed:word.index+charOffset*.37,active:word.index===active
  });
  const block=motionAt(tracks,'block',timing());
  let fontSize=style.fontSize*scale;

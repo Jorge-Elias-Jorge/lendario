@@ -15,7 +15,7 @@ if 'registerPlugin(LegendarioMediaPlugin.class)' not in text:
         raise RuntimeError('MainActivity já contém onCreate. Integrar sem substituir código existente.')
     text=text.replace('import com.getcapacitor.BridgeActivity;', 'import com.getcapacitor.BridgeActivity;\nimport android.os.Bundle;')
     text=text.replace('extends BridgeActivity {','extends BridgeActivity {\n  @Override public void onCreate(Bundle savedInstanceState) {\n    registerPlugin(LegendarioMediaPlugin.class);\n    super.onCreate(savedInstanceState);\n  }')
-for plugin in ['LegendarioExportPlugin','LegendarioRenderPlugin']:
+for plugin in ['LegendarioExportPlugin','LegendarioRenderPlugin','LegendarioSpeechPlugin']:
     marker='registerPlugin(LegendarioMediaPlugin.class);'
     if 'registerPlugin('+plugin+'.class)' not in text:
         if marker not in text:
@@ -47,6 +47,8 @@ dependencies {
     implementation "androidx.media3:media3-transformer:1.5.1"
     implementation "androidx.media3:media3-effect:1.5.1"
     implementation "androidx.media3:media3-common:1.5.1"
+    implementation "com.alphacephei:vosk-android:0.3.75@aar"
+    implementation "net.java.dev.jna:jna:5.18.1@aar"
 }
 android {
     buildTypes {

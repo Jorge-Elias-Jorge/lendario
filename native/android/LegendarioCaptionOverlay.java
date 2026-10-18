@@ -23,6 +23,8 @@ public final class LegendarioCaptionOverlay extends BitmapOverlay {
  private Bitmap bitmap;
  private float scale,fontSize,tracking,lineHeight;
  private double elapsed,span,wordProgress;
+ private double[][] wordTimes;
+ private double cueStart;
  private int active,totalWords,totalChars;
  private Canvas canvas;
  private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.SUBPIXEL_TEXT_FLAG),shape=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -66,7 +68,22 @@ public final class LegendarioCaptionOverlay extends BitmapOverlay {
  private float value(String key,double fallback){return(float)style.optDouble(key,fallback);}
  private float width(String text){return paint.measureText(text)+Math.max(0,text.codePointCount(0,text.length())-1)*tracking;}
  private Frame frame(String scope,Word word,int offset,int line,int lines){
-  return LegendarioMotion.at(tracks,scope,elapsed,span,word.index/(double)totalWords*span,(word.charIndex+offset)/(double)totalChars*span,line/(double)lines*span,word.index+offset*.37,word.index==active);
+  double start=wordTimes==null?word.index/(double)totalWords*span:wordTimes[word.index][0]-cueStart;
+  double charStart=wordTimes==null?(word.charIndex+offset)/(double)totalChars*span:
+   start+offset/(double)Math.max(1,word.text.codePointCount(0,word.text.length()))*(wordTimes[word.index][1]-wordTimes[word.index][0]);
+  return LegendarioMotion.at(tracks,scope,elapsed,span,start,charStart,line/(double)lines*span,word.index+offset*.37,word.index==active);
+ }
+ private static String normalized(String word){return java.text.Normalizer.normalize(word,java.text.Normalizer.Form.NFD).replaceAll("\\p{M}","").toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]","");}
+ private double[][] timings(JSONObject cue,List<Word> words){
+  JSONArray array=cue.optJSONArray("words");if(array==null||array.length()!=words.size())return null;
+  double[][] result=new double[words.size()][2];double previous=cueStart;
+  for(int i=0;i<words.size();i++){
+   JSONObject w=array.optJSONObject(i);if(w==null)return null;
+   double start=w.optDouble("start"),end=w.optDouble("end");
+   if(!Double.isFinite(start)||!Double.isFinite(end)||start<previous-.001||end<=start||start<cueStart-.001||end>cueStart+span+.001||!normalized(w.optString("text")).equals(normalized(words.get(i).text)))return null;
+   result[i][0]=start;result[i][1]=end;previous=end;
+  }
+  return result;
  }
  private void apply(Frame f){canvas.translate((float)f.dx*scale,(float)f.dy*scale);canvas.rotate((float)f.rotate);canvas.scale((float)f.sx,(float)f.sy);}
  private void clip(Frame f,float x,float y,float w,float h){if(f.reveal<1)canvas.clipRect(x,y,x+w*(float)f.reveal,y+h);}
@@ -117,11 +134,16 @@ public final class LegendarioCaptionOverlay extends BitmapOverlay {
   bitmap.eraseColor(Color.TRANSPARENT);double time=timeUs/1_000_000.0;JSONObject cue=null;
   for(JSONObject c:cues){if(c.optDouble("start")>time)break;if(time<c.optDouble("end"))cue=c;}
   if(cue==null)return bitmap;
-  elapsed=time-cue.optDouble("start");span=cue.optDouble("end")-cue.optDouble("start");
+  cueStart=cue.optDouble("start");elapsed=time-cueStart;span=cue.optDouble("end")-cueStart;
   String text=cue.optString("text").trim();if(style.optBoolean("uppercase"))text=text.toUpperCase(Locale.ROOT);
   List<Word> all=new ArrayList<>();int chars=0,index=0;
   for(String word:text.split("\\s+")){all.add(new Word(word,index++,chars));chars+=word.codePointCount(0,word.length());}
   totalWords=all.size();totalChars=Math.max(1,chars);active=Math.min(totalWords-1,(int)(elapsed/span*totalWords));wordProgress=LegendarioMotion.clamp(elapsed/span*totalWords-active);
+  wordTimes=timings(cue,all);
+  if(wordTimes!=null){
+   active=0;for(int i=0;i<wordTimes.length;i++){if(time<wordTimes[i][0])break;active=i;}
+   wordProgress=LegendarioMotion.clamp((time-wordTimes[active][0])/(wordTimes[active][1]-wordTimes[active][0]));
+  }
   List<Word> words=all;
   if(presentation.equals("Palavra"))words=all.subList(active,active+1);
   if(presentation.equals("Blocos")){int n=Math.max(1,Math.min(8,style.optInt("blockSize",3))),first=active/n*n;words=all.subList(first,Math.min(all.size(),first+n));}

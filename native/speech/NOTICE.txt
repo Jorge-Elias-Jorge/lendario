@@ -1,0 +1,16 @@
+LEGENDÁRIO: reconhecimento de fala offline
+
+Motor: Vosk API, Alpha Cephei, licença Apache 2.0.
+https://github.com/alphacep/vosk-api
+Modelo: vosk-model-small-pt-0.3, licença Apache 2.0 conforme catálogo oficial.
+https://alphacephei.com/vosk/models
+https://alphacephei.com/vosk/models/vosk-model-small-pt-0.3.zip
+SHA-256: 6e1ce909032e1afa7a88e68a3d628ecafff302bdf195befab308826c395e93b7
+
+Modelo original, não treinado nem modificado pelo LEGENDÁRIO. Não representa
+garantia de precisão. Português/Brasil é o idioma do modelo; sotaques, ruído,
+música e fala sobreposta podem reduzir a qualidade.
+
+JNA: incluída como dependência; licenças LGPL 2.1+ ou Apache 2.0.
+https://github.com/java-native-access/jna
+As bibliotecas e os respectivos avisos de licença são mantidos nos artefactos.

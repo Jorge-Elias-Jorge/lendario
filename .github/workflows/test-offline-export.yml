@@ -33,6 +33,7 @@ jobs:
           npx cap add android
           npx cap sync android
           python3 scripts/install_native.py
+          python3 scripts/prepare_speech_model.py
           python3 scripts/prepare_offline_test.py
           chmod +x android/gradlew
           cd android && ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace

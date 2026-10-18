@@ -41,7 +41,9 @@ export const useStore = create<State>((set) => ({
   effectMs: 300,
   setVideo: (url, name) => set({ videoUrl: url, videoName: name }),
   setCues: (cues) => set({ cues }),
-  updateCue: (id, patch) => set(s => ({ cues: s.cues.map(c => c.id === id ? { ...c, ...patch } : c) })),
+  updateCue: (id, patch) => set(s => ({ cues: s.cues.map(c => c.id === id ? {
+    ...c,...(('text' in patch||'start' in patch||'end' in patch)?{words:undefined,alignment:undefined}:{}),...patch
+  } : c) })),
   select: (id) => set({ selectedCueId: id }),
   setStyle: (style) => set(s=>({ style,presentation:style.presentation??s.presentation })),
   setAnimation: (animation) => set(s=>({

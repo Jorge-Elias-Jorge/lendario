@@ -1,4 +1,10 @@
-export interface Cue { id: string; start: number; end: number; text: string; }
+export interface WordTiming {text:string;start:number;end:number;confidence:number}
+export interface Cue {
+ id:string;start:number;end:number;text:string;
+ words?:WordTiming[];
+ alignment?:{engine:string;score:number};
+ originalTiming?:{start:number;end:number;text:string;words?:WordTiming[]};
+}
 
 export function parseTime(ts: string): number {
   const m = ts.trim().match(/^(\d{1,2}):(\d{2}):(\d{2})[,.](\d{1,3})$/);
@@ -7,8 +13,16 @@ export function parseTime(ts: string): number {
 }
 
 export function formatTime(s: number): string {
-  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = Math.floor(s % 60), ms = Math.round((s % 1) * 1000);
+  const total=Math.max(0,Math.round(s*1000));
+  const h = Math.floor(total/3600000), m = Math.floor(total/60000)%60, sec = Math.floor(total/1000)%60, ms = total%1000;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+}
+
+export function serializeSRT(cues:Cue[],original=false):string{
+ return cues.map((cue,i)=>{
+  const c=original&&cue.originalTiming?cue.originalTiming:cue;
+  return `${i+1}\n${formatTime(c.start)} --> ${formatTime(c.end)}\n${c.text}`;
+ }).join('\n\n')+'\n';
 }
 
 export interface ParseResult { cues: Cue[]; errors: string[]; }
