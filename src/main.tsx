@@ -4,6 +4,7 @@ import App from './App';
 import './index.css';
 import './fonts.css';
 import './studio.css';
+import './workspace.css';
 import {loadCaptionFonts} from './data/fonts';
 void loadCaptionFonts();
 

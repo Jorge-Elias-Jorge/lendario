@@ -6,7 +6,15 @@ Editor React/Capacitor de legendas dinâmicas para vídeo. O APK Android inclui 
 
 Inclui 105 estilos e 99 animações combináveis em sete camadas, com seis fontes incluídas para utilização offline. Abra **Explorar estilos e animações** na página inicial para experimentar sem importar um vídeo. Os novos tratamentos também são implementados na exportação MP4.
 
-O APK debug atual “LEGENDÁRIO Sync teste” usa o identificador `.sync`, separado da versão principal e do Studio anterior, sem migrar ou apagar rascunhos existentes. A documentação de recursos, referências públicas e limites está em [Estúdio de legendas](docs/ESTUDIO-DE-LEGENDAS.md).
+O APK debug deste ramo, “LEGENDÁRIO Editor teste”, usa o identificador `.editor`, separado da versão principal e das versões Studio/Sync anteriores, sem migrar ou apagar rascunhos existentes. A documentação de recursos, referências públicas e limites está em [Estúdio de legendas](docs/ESTUDIO-DE-LEGENDAS.md).
+
+## Fluxo do editor
+
+Na página inicial, **Novo projeto** abre a seleção de mídia. No Android, o acesso é solicitado por um botão explícito; a galeria apresenta miniaturas reais, duração e pesquisa nas mídias carregadas. Android 8/9 também têm extração local de miniaturas. Selecione um vídeo, reproduza a prévia e confirme **Usar este vídeo** para importar.
+
+O editor mantém a prévia acima dos botões **Texto**, **Estilos**, **Animações**, **Ritmo** e **Sincronizar**. Cada botão abre um painel contextual. A timeline contém faixas de vídeo e legendas, seleção, seek e zoom. O acesso a arquivo/colagem SRT fica abaixo da timeline. **Exportar** permanece no cabeçalho, com configurações próprias. Janelas muito baixas permitem rolagem para não cortar controles.
+
+Rascunhos do navegador preservam legendas e ajustes, mas pedem a seleção do vídeo ao reabrir. Quando o navegador bloqueia armazenamento persistente, a prévia informa que os rascunhos são temporários. No Android, mídia importada e rascunhos continuam em arquivos privados locais.
 
 ## Exportação Android
 

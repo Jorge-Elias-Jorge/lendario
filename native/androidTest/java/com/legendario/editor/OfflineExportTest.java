@@ -305,4 +305,23 @@ public class OfflineExportTest {
             }
         }finally{actual.release();}
     }
+    @Test public void videoThumbnailsWorkOnAndroid8And10()throws Exception{
+        Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File input=fixture("portrait.mp4");
+        try{
+            String data=LegendarioThumbnail.create(context,Uri.fromFile(input),true);
+            assertNotNull("Miniatura local não foi gerada",data);
+            assertTrue(data.startsWith("data:image/jpeg;base64,"));
+            byte[] jpeg=android.util.Base64.decode(data.substring(data.indexOf(',')+1),android.util.Base64.DEFAULT);
+            Bitmap image=android.graphics.BitmapFactory.decodeByteArray(jpeg,0,jpeg.length);
+            assertNotNull(image);assertTrue(image.getWidth()<=256);assertTrue(image.getHeight()<=256);image.recycle();
+        }finally{input.delete();}
+    }
+    @Test public void thumbnailFailureDoesNotInventAnImage()throws Exception{
+        Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try{
+            String data=LegendarioThumbnail.create(context,Uri.fromFile(new File(context.getCacheDir(),"missing-clip.mp4")),true);
+            assertNull(data);
+        }catch(Exception expected){/* Gallery catches it per item and shows explicit fallback. */}
+    }
 }
