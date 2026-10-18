@@ -37,7 +37,7 @@ export const useStore = create<State>((set) => ({
   style: STYLES[0],
   animation: ANIMATIONS[0],
   theme: 'dark',
-  presentation: 'Frase',
+  presentation: STYLES[0].presentation ?? 'Frase',
   effectMs: 300,
   setVideo: (url, name) => set({ videoUrl: url, videoName: name }),
   setCues: (cues) => set({ cues }),
