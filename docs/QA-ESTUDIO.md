@@ -16,3 +16,14 @@
 ## Evidência automática
 
 Executar `npm test`, `npm run typecheck` e o workflow manual Android. Os resultados e limitações da execução devem ser associados ao PR, sem tratar um teste de prévia como prova de compatibilidade com todos os celulares.
+
+## Resultados observados nesta implementação
+
+- TypeScript, build Vite e 113 testes JavaScript aprovados localmente.
+- Android 8: oito testes instrumentados aprovados, zero falhas/erros; relatório XML descarregado da [execução Android](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39088090388).
+- Chromium: 105 estilos e 99 animações visíveis; pesquisa `karaoke`, seleção, pesquisa sem resultado e limpeza verificadas.
+- Sete animações aplicadas simultaneamente; curva linear, remoção do destaque e limpeza das sete camadas verificadas.
+- Fonte, peso, alinhamento, sliders, maiúsculas, itálico, preenchimento, brilho e fundo exercitados com interação.
+- Fluxo completo com MP4 local: duas legendas SRT importadas, primeira editada, animação por letra e apresentação Palavra aplicadas, projeto guardado, regresso à página inicial, exploração da biblioteca e reabertura. Texto, camada por letra e apresentação recuperados corretamente.
+- Layout revisto em desktop, 375 px e janela desktop de 540 px de altura. Sem overflow horizontal nos estados medidos; prévia e composição de camadas inspecionadas visualmente.
+- Nenhum erro JavaScript observado até esta etapa. Não representa certificação em celular físico, vídeos longos, todos os codecs, HDR ou 4K.
