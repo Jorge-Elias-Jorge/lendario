@@ -10,6 +10,7 @@ interface NativeMedia {
  access():Promise<Access>;
  requestLibrary():Promise<Access>;
  listMedia(options:{kind:string;offset:number;limit:number}):Promise<{items:MediaItem[];more:boolean}>;
+ previewVideo(options:{uri:string}):Promise<{path:string}>;
  importVideo(options:{uri:string}):Promise<{path:string}>;
  saveDraft(options:{draft:Draft}):Promise<void>;
  readDraft(options:{id:string}):Promise<Draft>;

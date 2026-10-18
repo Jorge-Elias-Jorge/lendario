@@ -30,7 +30,7 @@ A interface React/Capacitor permanece híbrida. O plugin LegendarioMedia é Java
 - O botão “Corrigir sobreposições” resolve conflitos de tempos num toque.
 
 ## Limites atuais
-- A exportação não incorpora as novas animações nem preserva o áudio.
+- O exportador Android foi substituído por Media3 e inclui áudio e movimentos básicos. Veja [exportação offline](EXPORTACAO-OFFLINE.md) para o escopo, diferenças de prévia e requisitos de teste.
 - Não há análise acústica nem alinhamento forçado.
 - Configurações locais do Editor ainda não são recuperadas pelo rascunho.
 - Fotos são apenas consultadas; não geram projetos de vídeo.
