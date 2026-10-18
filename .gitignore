@@ -1,6 +1,6 @@
-node_modules/
-dist/
-android/
-artifacts/
-coverage/
+/node_modules/
+/dist/
+/android/
+/artifacts/
+/coverage/
 *.log

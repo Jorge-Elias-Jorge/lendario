@@ -105,6 +105,8 @@ public class LegendarioRenderPlugin extends Plugin {
                 } finally { probe.release(); }
                 boolean ultra = "ultra".equals(call.getString("quality", "alta"));
                 if (!Float.isFinite(fps) || fps <= 0) fps = 30;
+                if (durationUs > 0)
+                    inputBitrate = Math.max(inputBitrate, Math.round(input.length() * 8_000_000.0 / durationUs));
                 // Resolution/frame-rate aware target; never silently lower the input resolution.
                 int bitrate = (int) Math.min(100_000_000L, Math.max(4_000_000L,
                         Math.max(inputBitrate, Math.round(pixels * fps * (ultra ? .24 : .14)))));
