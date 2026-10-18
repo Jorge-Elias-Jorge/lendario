@@ -96,10 +96,13 @@ export function applyProposals(current:Cue[],proposals:SyncProposal[],selected:S
    originalTiming:c.originalTiming??{start:c.start,end:c.end,text:c.text,words:c.words}};
  });
  const ordered=[...result].sort((a,b)=>a.start-b.start);
- for(let i=1;i<ordered.length;i++){
-  const a=ordered[i-1],b=ordered[i];
-  if(a.end>b.start+.001&&(selected.has(a.id)||selected.has(b.id)))
+ const changed=new Set(result.filter((c,i)=>c!==current[i]).map(c=>c.id));
+ let maxEnd=0,maxChangedEnd=0;
+ for(const c of ordered){
+  if((changed.has(c.id)&&maxEnd>c.start+.001)||(!changed.has(c.id)&&maxChangedEnd>c.start+.001))
    throw new Error('A seleção criaria legendas sobrepostas. Reveja as legendas vizinhas ou aplique outro conjunto.');
+  maxEnd=Math.max(maxEnd,c.end);
+  if(changed.has(c.id))maxChangedEnd=Math.max(maxChangedEnd,c.end);
  }
  return result;
 }

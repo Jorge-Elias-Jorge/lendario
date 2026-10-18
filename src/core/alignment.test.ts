@@ -67,6 +67,11 @@ describe('offline acoustic transcript comparison',()=>{
   const c=cue(),b=cue('não reconhecida',2.2,5,'b'),p=alignCues([c,b],spoken(),30);
   expect(()=>applyProposals([c,b],p,new Set(['a']))).toThrow('sobrepostas');
  });
+ it('detects a long enclosing unchanged cue even across another neighbour',()=>{
+  const c=cue(),outer=cue('Texto ausente longo',0,30,'outer'),inside=cue('Outro texto ausente',.1,1,'inside');
+  const p=alignCues([outer,inside,c],spoken(),30);
+  expect(()=>applyProposals([outer,inside,c],p,new Set(['a']))).toThrow('sobrepostas');
+ });
  it('never overwrites the earliest original backup on a second analysis',()=>{
   const c=cue(),first=applyProposals([c],alignCues([c],spoken(),30),new Set(['a']));
   const second=applyProposals(first,alignCues(first,spoken('cada palavra conta',5),30),new Set(['a']));

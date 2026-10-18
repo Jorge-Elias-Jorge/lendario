@@ -52,7 +52,7 @@ export default function SmartSync({source,onSeek}:{source?:string;onSeek:(time:n
      if(e.data.error){reject(new Error(e.data.error));return;}
      const found=e.data.proposals as SyncProposal[];setProposals(found);
      setSelected(new Set(found.filter(p=>p.status==='ready').map(p=>p.id)));
-     setPhase('done');setMessage('Análise concluída. Ouça as propostas antes de aplicar. O índice é uma heurística, não uma garantia de precisão.');resolve();
+     setPhase('done');setMessage('Análise concluída. Ouça as propostas antes de aplicar. A classificação é uma heurística, não uma garantia de precisão.');resolve();
     };
     w.onerror=()=>{w.terminate();worker.current=null;reject(new Error('Não foi possível concluir a comparação. Tente um vídeo menor.'));};
     w.postMessage({cues:base.current,words:result.words,duration:result.duration});
