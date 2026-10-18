@@ -72,3 +72,7 @@
 @media(min-width:701px) and (max-width:1050px){.workspace-editor.tool-open .preview-workspace{padding-right:440px}}
 .media-skeletons{opacity:.65}.media-skeletons>div>span{display:block;height:6px;background:var(--border);border-radius:3px;width:65%;margin:11px 0 6px}
 @media(max-height:460px){.workspace-app.editing{height:auto;min-height:100dvh;overflow:visible}.workspace-app .workspace-editor{flex:none;min-height:420px;overflow:visible;grid-template-rows:minmax(170px,1fr) 55px 132px 54px}.workspace-app .library-editor{min-height:320px;grid-template-rows:minmax(200px,1fr) 60px 30px}.tool-sheet{top:12px;bottom:12px}}
+.workspace-app,.workspace-layer{--subtle:#9296a8}
+.workspace-app.light,.workspace-layer.light{--subtle:#636879}
+.workspace-app .timeline-cue.current{background:#71559f}
+.workspace-app .timeline-cue.selected{background:#71559f}
