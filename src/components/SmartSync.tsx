@@ -2,13 +2,14 @@ import React,{useEffect,useRef,useState} from 'react';
 import type {PluginListenerHandle} from '@capacitor/core';
 import {useStore} from '../store';
 import {formatTime,serializeSRT,type Cue} from '../core/srt';
-import {applyProposals,restoreTimings,type SyncProposal} from '../core/alignment';
+import {applyProposals,restoreTimings,textWords,type SyncProposal} from '../core/alignment';
 import {nativeAndroid} from '../native/media';
 import {Speech,saveSrtFile} from '../native/speech';
 import './smartSync.css';
 
 export default function SmartSync({source,onSeek}:{source?:string;onSeek:(time:number)=>void}){
  const cues=useStore(s=>s.cues),setCues=useStore(s=>s.setCues);
+ const globalBusy=useStore(s=>s.syncBusy);
  const [phase,setPhase]=useState<'idle'|'audio'|'matching'|'done'>('idle'),[progress,setProgress]=useState(0);
  const [message,setMessage]=useState(''),[proposals,setProposals]=useState<SyncProposal[]>([]);
  const [selected,setSelected]=useState<Set<string>>(new Set()),[filter,setFilter]=useState('all');
@@ -28,7 +29,10 @@ export default function SmartSync({source,onSeek}:{source?:string;onSeek:(time:n
  };
  const analyze=async()=>{
   if(!nativeAndroid||!source||!cues.length)return;
-  cancelled.current=false;base.current=structuredClone(cues);request.current=crypto.randomUUID();
+  if(useStore.getState().syncBusy)return;
+  if(cues.reduce((sum,c)=>sum+textWords(c.text).length,0)>10000){setMessage('SRT demasiado longo para esta versão. Divida o projeto.');return;}
+  useStore.setState({syncBusy:true});
+  cancelled.current=false;base.current=JSON.parse(JSON.stringify(cues)) as Cue[];request.current=crypto.randomUUID();
   setProposals([]);setSelected(new Set());setProgress(0);setPhase('audio');setMessage('A preparar a análise local…');
   try{
    const id=request.current;
@@ -54,7 +58,7 @@ export default function SmartSync({source,onSeek}:{source?:string;onSeek:(time:n
     w.postMessage({cues:base.current,words:result.words,duration:result.duration});
    });
   }catch(e){if(alive.current){setPhase('idle');setMessage(e instanceof Error?e.message:String(e));}}
-  finally{rejectWorker.current=null;await listener.current?.remove().catch(()=>{});listener.current=null;request.current='';}
+  finally{rejectWorker.current=null;await listener.current?.remove().catch(()=>{});listener.current=null;request.current='';useStore.setState({syncBusy:false});}
  };
  const apply=()=>{
   try{setCues(applyProposals(cues,proposals,selected));setMessage('Tempos aplicados. O original está preservado no rascunho; ouça a prévia e exporte quando estiver satisfeito.');setProposals([]);base.current=null;setSelected(new Set());}
@@ -65,11 +69,11 @@ export default function SmartSync({source,onSeek}:{source?:string;onSeek:(time:n
  const visible=proposals.filter(p=>filter==='all'||p.status===filter);
  return <div className="smart-sync">
   <div className="sync-heading"><div><small className="eyebrow">SINCRONIZAÇÃO INTELIGENTE / BETA</small><h2>O texto acompanha a voz.</h2><p>Compare a narração com o SRT e reveja os tempos sugeridos. O texto das legendas não é reescrito.</p></div><span className="sync-local">Local · Português</span></div>
-  <div className="sync-method"><strong>Reconhecimento de fala + comparação de palavras</strong><p>Primeira versão com modelo Vosk leve incluído no APK. Não é alinhamento fonético forçado nem precisão certificada. Música, sotaques e frases diferentes podem exigir ajuste manual.</p></div>
+  <div className="sync-method"><strong>Reconhecimento de fala + comparação de palavras</strong><p>Primeira versão com modelo Vosk leve incluído no APK. Não é alinhamento fonético forçado nem precisão certificada. Música, sotaques e frases diferentes podem exigir ajuste manual. Mantenha o aplicativo aberto durante a análise.</p></div>
   {!nativeAndroid&&<p className="sync-notice">A análise do áudio está disponível no APK Android, sem internet. O navegador permite revisar tempos já guardados e exportar SRT; não simula reconhecimento.</p>}
   {!cues.length&&<p className="sync-notice">Importe e aplique um SRT para começar.</p>}
   <div className="sync-actions">
-   <button disabled={busy||!nativeAndroid||!source||!cues.length} onClick={()=>void analyze()}>{busy?'Análise em andamento…':'Analisar áudio e SRT'}</button>
+   <button disabled={busy||globalBusy||!nativeAndroid||!source||!cues.length} onClick={()=>void analyze()}>{busy?'Análise em andamento…':globalBusy?'A encerrar análise anterior…':'Analisar áudio e SRT'}</button>
    {busy&&<button className="quiet-button" onClick={()=>void cancel()}>Cancelar análise</button>}
    <button className="quiet-button" disabled={busy||!cues.length} onClick={()=>void save()}>Guardar SRT atual</button>
    {cues.some(c=>c.originalTiming)&&<><button className="quiet-button" disabled={busy} onClick={()=>void save(true)}>Guardar SRT original</button><button className="quiet-button" disabled={busy} onClick={()=>{setCues(restoreTimings(cues));setProposals([]);base.current=null;setMessage('Tempos anteriores restaurados. O texto atual foi mantido.');}}>Restaurar tempos anteriores</button></>}

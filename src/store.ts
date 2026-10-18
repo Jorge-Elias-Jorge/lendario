@@ -10,6 +10,7 @@ type Presentation='Frase'|'Realce ativo'|'Palavra'|'Blocos';
 interface State {
   videoUrl: string | null;
   videoName: string;
+  syncBusy: boolean;
   cues: Cue[];
   selectedCueId: string | null;
   style: SubtitleStyle;
@@ -32,6 +33,7 @@ interface State {
 export const useStore = create<State>((set) => ({
   videoUrl: null,
   videoName: '',
+  syncBusy: false,
   cues: [],
   selectedCueId: null,
   style: STYLES[0],

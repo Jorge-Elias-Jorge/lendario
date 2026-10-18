@@ -15,6 +15,8 @@ import org.vosk.Recognizer;
 public final class LegendarioSpeechEngine {
  public interface Progress {void update(double fraction,String stage);}
  private static final String MODEL="vosk-model-small-pt-0.3";
+ private static final AtomicBoolean RUNNING=new AtomicBoolean();
+ public static boolean isRunning(){return RUNNING.get();}
  public static void check(AtomicBoolean cancelled){if(cancelled.get()||Thread.currentThread().isInterrupted())throw new CancellationException("Análise cancelada.");}
  private static void remove(File file){if(file.isDirectory()){File[] children=file.listFiles();if(children!=null)for(File c:children)remove(c);}file.delete();}
  public static File prepareModel(Context context,AtomicBoolean cancelled)throws Exception{
@@ -60,6 +62,7 @@ public final class LegendarioSpeechEngine {
  }
  public static JSONObject transcribe(Context context,File source,AtomicBoolean cancelled,Progress progress)throws Exception{
   MediaExtractor extractor=new MediaExtractor();MediaCodec decoder=null;Recognizer recognizer=null;Model model=null;
+  if(!RUNNING.compareAndSet(false,true)){extractor.release();throw new IOException("Já existe uma análise de voz em andamento.");}
   try{
    extractor.setDataSource(source.getAbsolutePath());int track=-1;MediaFormat input=null;
    for(int i=0;i<extractor.getTrackCount();i++){MediaFormat f=extractor.getTrackFormat(i);String mime=f.getString(MediaFormat.KEY_MIME);if(mime!=null&&mime.startsWith("audio/")){track=i;input=f;break;}}
@@ -129,8 +132,10 @@ public final class LegendarioSpeechEngine {
    return new JSONObject().put("words",words).put("duration",Math.max(durationUs/1_000_000.0,samples/(double)rate))
     .put("engine","vosk-pt-0.3").put("language","pt");
   }finally{
-   if(decoder!=null){try{decoder.stop();}catch(Exception ignored){}decoder.release();}
-   extractor.release();if(recognizer!=null)recognizer.close();if(model!=null)model.close();
+   try{
+    if(decoder!=null){try{decoder.stop();}catch(Exception ignored){}try{decoder.release();}catch(Exception ignored){}}
+    extractor.release();if(recognizer!=null)recognizer.close();if(model!=null)model.close();
+   }finally{RUNNING.set(false);}
   }
  }
 }

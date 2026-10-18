@@ -3,6 +3,7 @@ package com.legendario.editor;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.view.WindowManager;
 import androidx.activity.result.ActivityResult;
 import com.getcapacitor.*;
 import com.getcapacitor.annotation.*;
@@ -15,9 +16,22 @@ import java.util.concurrent.atomic.*;
 public class LegendarioSpeechPlugin extends Plugin {
  private final ExecutorService worker=Executors.newSingleThreadExecutor();
  private final AtomicBoolean busy=new AtomicBoolean(),cancelled=new AtomicBoolean(),saving=new AtomicBoolean();
+ private boolean screenRequested,screenWasKeptOn;
+ private void keepScreen(boolean enabled){
+  getActivity().runOnUiThread(()->{
+   if(enabled){
+    screenRequested=true;screenWasKeptOn=(getActivity().getWindow().getAttributes().flags&WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)!=0;
+    getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+   }else if(screenRequested){
+    if(!screenWasKeptOn)getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    screenRequested=false;
+   }
+  });
+ }
  @PluginMethod public void analyze(PluginCall call){
   if(!busy.compareAndSet(false,true)){call.reject("Já existe uma análise em andamento.");return;}
   cancelled.set(false);
+  keepScreen(true);
   worker.execute(()->{
    try{
     Uri uri=Uri.parse(call.getString("source",""));if(!"file".equals(uri.getScheme())||uri.getPath()==null)throw new IOException("Importe o vídeo localmente antes de sincronizar.");
@@ -27,8 +41,8 @@ public class LegendarioSpeechPlugin extends Plugin {
      JSObject event=new JSObject();event.put("fraction",fraction);event.put("stage",stage);event.put("requestId",call.getString("requestId",""));notifyListeners("speechProgress",event);
     });
     LegendarioSpeechEngine.check(cancelled);
-    busy.set(false);call.resolve(JSObject.fromJSONObject(result));
-   }catch(Exception|LinkageError error){busy.set(false);call.reject(error instanceof CancellationException?"Análise cancelada. Nenhuma legenda foi alterada.":"Falha na análise local: "+error.getMessage());}
+    keepScreen(false);busy.set(false);call.resolve(JSObject.fromJSONObject(result));
+   }catch(Exception|LinkageError error){keepScreen(false);busy.set(false);call.reject(error instanceof CancellationException?"Análise cancelada. Nenhuma legenda foi alterada.":"Falha na análise local: "+error.getMessage());}
   });
  }
  @PluginMethod public void cancel(PluginCall call){cancelled.set(true);call.resolve();}
@@ -52,5 +66,5 @@ public class LegendarioSpeechPlugin extends Plugin {
    }catch(Exception e){saving.set(false);call.reject("Não foi possível guardar o SRT: "+e.getMessage());}
   });
  }
- @Override protected void handleOnDestroy(){cancelled.set(true);worker.shutdown();}
+ @Override protected void handleOnDestroy(){cancelled.set(true);keepScreen(false);worker.shutdown();}
 }

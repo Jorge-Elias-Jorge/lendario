@@ -46,7 +46,7 @@ export default function App(){
    setStatus('Vídeo WebM gerado no navegador. Use Descarregar para guardar.');
   }else setStatus('MP4 guardado no dispositivo: '+result.location+' ('+(result.bytes/1048576).toFixed(1)+' MB). O projeto permanece guardado para novas edições.');
  }catch(e){setStatus('Falha na exportação: '+(e instanceof Error?e.message:String(e)))}finally{setProgress(null)}};
- const canExport=progress===null&&(!!file.current||!!currentRef.current?.path);
+ const canExport=!s.syncBusy&&progress===null&&(!!file.current||!!currentRef.current?.path);
  if(library)return <div className={'app '+s.theme}><header><button onClick={()=>setLibrary(false)}>← Voltar</button><h1>LEGENDÁRIO / STUDIO</h1><button onClick={s.toggleTheme}>Tema</button></header><p className="library-demo-notice">Biblioteca de demonstração. As alterações aqui não substituem um rascunho existente.</p><Editor libraryOnly/></div>;
  return <div className={'app '+s.theme}>
  {page==='home'&&<section className="home-studio"><div><small className="eyebrow">CRIADO PARA A SUA HISTÓRIA</small><h1>LEGENDÁRIO</h1><p>Estilos, palavras e movimento. Tudo no seu dispositivo.</p></div><button onClick={()=>{void flush().then(()=>{currentRef.current=null;setCurrent(null);setLibrary(true);}).catch(()=>{});}}>Explorar estilos e animações</button></section>}

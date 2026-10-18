@@ -54,3 +54,10 @@ O workflow **Build APK LEGENDÁRIO** publica `legendario-apk-debug`. Quando inic
 - As legendas nativas incluem texto, cores, contorno, gradiente, sombra, movimentos básicos e modos Frase/Realce ativo/Palavra/Blocos. Não é garantida equivalência pixel a pixel com as fontes e o layout do navegador.
 
 Veja [o diagnóstico e o roteiro de validação](docs/EXPORTACAO-OFFLINE.md).
+# Sincronização inteligente offline (beta)
+
+No editor Android, abra **Sincronizar** para comparar o áudio do vídeo com o SRT, ouvir posições sugeridas e aplicar apenas as correções selecionadas. O modelo português é incluído no APK, sem download durante o uso. A primeira versão usa reconhecimento Vosk e correspondência de palavras; não é alinhamento fonético forçado nem precisão garantida. Tempos originais são preservados e podem ser restaurados ou guardados como SRT.
+
+Compilação local: após `npx cap sync android` e `python3 scripts/install_native.py`, execute também `python3 scripts/prepare_speech_model.py` para incluir o modelo com hash fixado e licenças. O modelo binário não é versionado no Git. Sem esse passo, a análise informa erro de modelo ausente; não há fallback que baixe dados.
+
+Arquitetura, requisitos e limites em [docs/SINCRONIZACAO-INTELIGENTE.md](docs/SINCRONIZACAO-INTELIGENTE.md).
