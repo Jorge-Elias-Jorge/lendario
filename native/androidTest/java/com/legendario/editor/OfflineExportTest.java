@@ -60,7 +60,7 @@ public class OfflineExportTest {
             try {
                 EditedMediaItem item = new EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(input)))
                         .setEffects(new Effects(Collections.emptyList(),Collections.singletonList(
-                                new OverlayEffect(Collections.singletonList(overlay)))))).build();
+                                new OverlayEffect(Collections.singletonList(overlay))))).build();
                 Transformer transformer = new Transformer.Builder(
                         InstrumentationRegistry.getInstrumentation().getTargetContext())
                         .setVideoMimeType(MimeTypes.VIDEO_H264).setAudioMimeType(MimeTypes.AUDIO_AAC)
