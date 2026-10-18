@@ -20,7 +20,7 @@ Esta alteração depende da correção de exportação offline do [PR #1](https:
 
 - `npm run typecheck`, `npm run build` e 113 testes JavaScript passaram localmente.
 - Catálogo gera 1.296 vetores numéricos para comparação JavaScript/Java.
-- [Primeira execução Android](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39088090388): APK compilado e oito testes instrumentados passaram no Android 8, incluindo renderização de todas as receitas e MP4 com composição de estúdio sem permissão INTERNET. Consultar a execução para o resultado Android 10.
+- [Primeira execução Android](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39088090388): APK compilado e oito testes instrumentados passaram em cada versão, Android 8 e Android 10, incluindo renderização de todas as receitas e MP4 com composição de estúdio sem permissão INTERNET. Ambos os relatórios XML foram descarregados e conferidos: zero falhas/erros.
 - [Execução da revisão final](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39088382565): inclui a correção de apresentação inicial do primeiro estilo. Consultar o estado da execução para o resultado final do build e dos emuladores.
 - Interface exercitada em Chromium: filtros, estado vazio, aplicação em sete camadas, remoção, limpeza, curva, fonte, apresentação e ajustes. Verificação a 375 px sem overflow horizontal.
 
