@@ -33,10 +33,6 @@ jobs:
           npx cap add android
           npx cap sync android
           python3 scripts/install_native.py
-          mkdir -p android/app/src/androidTest/assets
-          ffmpeg -y -f lavfi -i color=c=black:s=320x240:r=12:d=2 -f lavfi -i sine=frequency=440:duration=2 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest android/app/src/androidTest/assets/audio.mp4
-          ffmpeg -y -i android/app/src/androidTest/assets/audio.mp4 -an -c:v copy android/app/src/androidTest/assets/silent.mp4
-          ffmpeg -y -i android/app/src/androidTest/assets/audio.mp4 -c copy -metadata:s:v:0 rotate=90 android/app/src/androidTest/assets/portrait.mp4
           chmod +x android/gradlew
       - name: Enable KVM
         run: |
