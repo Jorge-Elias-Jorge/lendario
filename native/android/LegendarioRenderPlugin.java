@@ -62,6 +62,10 @@ public class LegendarioRenderPlugin extends Plugin {
     }
 
     @PluginMethod public void render(PluginCall call) {
+        if(LegendarioSpeechEngine.isRunning()){
+            call.reject("Aguarde a conclusão da análise de voz antes de exportar.");
+            return;
+        }
         handler.post(() -> {
             if (pending != null) { call.reject("Já existe uma exportação em andamento."); return; }
             pending = call;

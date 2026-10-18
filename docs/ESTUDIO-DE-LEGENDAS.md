@@ -39,7 +39,7 @@ A biblioteca pode ser explorada sem vídeo, a partir da página inicial. A entra
 - A indicação de máximo de linhas é uma meta de ajuste de tamanho, não um corte de texto. Texto muito longo pode precisar de ser dividido em legendas menores.
 - Caracteres são separados por code points; sequências de emoji com ZWJ e certos sinais combinantes não têm garantia de animação como um único grafema.
 - O suporte a codecs, 4K e HDR permanece dependente do aparelho. Manter o aplicativo aberto durante a exportação.
-- O APK debug desta versão usa `com.legendario.editor.studio` e o nome “LEGENDÁRIO Studio teste”, para instalação paralela. Não migra rascunhos automaticamente nem substitui o aplicativo anterior. A versão release mantém o identificador original.
+- O APK debug original do estúdio usa `com.legendario.editor.studio` e o nome “LEGENDÁRIO Studio teste”. A etapa seguinte de sincronização usa `.sync` e “LEGENDÁRIO Sync teste”, também para instalação paralela. Não migram rascunhos automaticamente nem substituem o aplicativo anterior. A versão release mantém o identificador original.
 
 ## Testes
 

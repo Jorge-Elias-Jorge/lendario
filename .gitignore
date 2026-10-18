@@ -4,3 +4,4 @@
 /artifacts/
 /coverage/
 *.log
+.model-cache/

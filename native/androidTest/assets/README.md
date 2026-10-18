@@ -17,3 +17,8 @@ ffmpeg -y -display_rotation:v:0 90 -i audio.mp4 -c copy portrait.mp4
 ```
 
 O teste e o aplicativo não executam FFmpeg. Os MP4 já estão incluídos para execução offline e reprodução do teste.
+# Fixture de fala portuguesa para sincronização
+
+`speech-pt.mp4` contém fala sintética produzida com eSpeak NG, voz `pt-br`, velocidade 135, texto original de teste: “A casa é muito bonita. Hoje vamos aprender uma nova palavra.” Inclui dois segundos de silêncio inicial, áudio AAC 48 kHz estéreo e vídeo preto 320×240, duração total de 12 segundos. Não contém dados de usuário.
+
+É apenas um teste de integração do reconhecedor e dos tempos absolutos. Não demonstra precisão em narração humana nem exige que todas as palavras sejam reconhecidas.
