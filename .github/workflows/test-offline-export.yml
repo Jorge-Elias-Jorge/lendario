@@ -33,6 +33,7 @@ jobs:
           npx cap add android
           npx cap sync android
           python3 scripts/install_native.py
+          python3 scripts/prepare_offline_test.py
           chmod +x android/gradlew
           cd android && ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
           ./gradlew --stop
@@ -41,7 +42,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Export MP4s in emulator with networking disabled
+      - name: Export MP4s without INTERNET permission
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -51,8 +52,6 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 3072 -cores 2
           script: |
             sleep 10
-            adb shell svc wifi disable || (sleep 5 && adb shell svc wifi disable)
-            adb shell svc data disable || (sleep 5 && adb shell svc data disable)
             cd android && ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1024m connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.legendario.editor.OfflineExportTest --stacktrace
       - name: Publish APK and test reports
         if: always()

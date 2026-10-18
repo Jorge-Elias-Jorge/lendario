@@ -33,7 +33,7 @@ cd android
 
 Requisitos do build nativo: Node 20, Java 17 e Android SDK 35. O script nativo é idempotente, regista os plugins e instala as dependências Media3; o APK suporta Android 8/API 26 ou superior.
 
-O workflow **Build APK LEGENDÁRIO** publica `legendario-apk-debug`. Quando iniciado manualmente também executa o workflow de teste de exportação em emuladores Android 8 e 10, com Wi-Fi e dados móveis desativados.
+O workflow **Build APK LEGENDÁRIO** publica `legendario-apk-debug`. Quando iniciado manualmente também executa o workflow de teste de exportação em emuladores Android 8 e 10, com a permissão `INTERNET` removida do APK de testes. O teste confirma a ausência dessa permissão antes de invocar o caminho de produção dos plugins.
 
 ## Verificação e limites
 

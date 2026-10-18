@@ -128,6 +128,9 @@ public class OfflineExportTest {
     /** Exercise the production plugin, not just Media3's default configuration. */
     @Test public void productionPluginRendersAndSavesLocally() throws Exception {
         Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertEquals("O teste deve impedir acesso à internet por permissão",
+                android.content.pm.PackageManager.PERMISSION_DENIED,
+                context.checkSelfPermission(android.Manifest.permission.INTERNET));
         File original=fixture("audio.mp4");
         File imports=new File(context.getFilesDir(),"imports");
         assertTrue(imports.isDirectory()||imports.mkdirs());
