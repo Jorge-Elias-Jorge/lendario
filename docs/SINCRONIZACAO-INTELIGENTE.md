@@ -20,6 +20,8 @@ O modelo é obtido apenas durante a compilação, com SHA-256 fixado e licença 
 
 ## Persistência, reversão e exportação
 
+O APK de teste desta etapa usa identificador `.sync` e nome **LEGENDÁRIO Sync teste**, separado do APK Studio anterior. Isso evita exigir desinstalação ou substituir rascunhos de outra assinatura debug. O aplicativo novo não importa automaticamente os dados privados de outra instalação: escolha novamente o vídeo e o SRT de teste, preservando os aplicativos antigos.
+
 Aplicar altera apenas os tempos selecionados e adiciona os tempos por palavra. O primeiro conjunto de tempos originais fica guardado dentro de cada legenda no rascunho; reanalisar não apaga essa referência. Restaurar recupera os tempos anteriores, preservando o texto atual. Alterações manuais no texto/início/fim invalidam os tempos por palavra para evitar karaoke desatualizado.
 
 A prévia Canvas e a sobreposição Java da exportação MP4 usam os tempos por palavra quando a sequência completa é válida; projetos antigos e metadados inválidos usam a divisão uniforme anterior. O movimento de letras é distribuído dentro da palavra, não localizado por fonema. O formato SRT continua contendo apenas início/fim por legenda, enquanto os tempos por palavra ficam no projeto.

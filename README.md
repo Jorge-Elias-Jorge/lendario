@@ -6,7 +6,7 @@ Editor React/Capacitor de legendas dinâmicas para vídeo. O APK Android inclui 
 
 Inclui 105 estilos e 99 animações combináveis em sete camadas, com seis fontes incluídas para utilização offline. Abra **Explorar estilos e animações** na página inicial para experimentar sem importar um vídeo. Os novos tratamentos também são implementados na exportação MP4.
 
-O APK debug “LEGENDÁRIO Studio teste” instala-se separadamente da versão anterior, sem migrar ou apagar rascunhos existentes. A documentação de recursos, referências públicas e limites está em [Estúdio de legendas](docs/ESTUDIO-DE-LEGENDAS.md).
+O APK debug atual “LEGENDÁRIO Sync teste” usa o identificador `.sync`, separado da versão principal e do Studio anterior, sem migrar ou apagar rascunhos existentes. A documentação de recursos, referências públicas e limites está em [Estúdio de legendas](docs/ESTUDIO-DE-LEGENDAS.md).
 
 ## Exportação Android
 

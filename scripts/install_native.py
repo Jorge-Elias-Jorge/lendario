@@ -53,8 +53,8 @@ dependencies {
 android {
     buildTypes {
         debug {
-            applicationIdSuffix ".studio"
-            versionNameSuffix "-studio-test"
+            applicationIdSuffix ".sync"
+            versionNameSuffix "-sync-test"
         }
     }
 }
