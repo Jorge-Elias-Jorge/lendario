@@ -6,8 +6,8 @@ import xml.etree.ElementTree as ET
 root=Path(__file__).resolve().parents[1]
 java=root/'android/app/src/main/java/com/legendario/editor'
 java.mkdir(parents=True,exist_ok=True)
-for plugin in ['LegendarioMediaPlugin','LegendarioExportPlugin','LegendarioRenderPlugin','LegendarioCaptionOverlay']:
-    shutil.copyfile(root/('native/android/'+plugin+'.java'),java/(plugin+'.java'))
+for plugin in (root/'native/android').glob('*.java'):
+    shutil.copyfile(plugin,java/plugin.name)
 activity=java/'MainActivity.java'
 text=activity.read_text()
 if 'registerPlugin(LegendarioMediaPlugin.class)' not in text:
@@ -48,6 +48,14 @@ dependencies {
     implementation "androidx.media3:media3-effect:1.5.1"
     implementation "androidx.media3:media3-common:1.5.1"
 }
+android {
+    buildTypes {
+        debug {
+            applicationIdSuffix ".studio"
+            versionNameSuffix "-studio-test"
+        }
+    }
+}
 '''+end
 if start in text:
     before,rest=text.split(start,1)
@@ -56,6 +64,9 @@ if start in text:
 else:
     text+='\n'+block+'\n'
 gradle.write_text(text)
+debug=root/'android/app/src/debug'
+debug.mkdir(parents=True,exist_ok=True)
+shutil.copyfile(root/'native/androidDebug/AndroidManifest.xml',debug/'AndroidManifest.xml')
 
 variables=root/'android/variables.gradle'
 text=variables.read_text()

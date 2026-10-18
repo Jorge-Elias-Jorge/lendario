@@ -117,7 +117,7 @@ public class LegendarioRenderPlugin extends Plugin {
                 output = new File(dir, "LEGENDARIO-" + UUID.randomUUID() + ".mp4");
                 LegendarioCaptionOverlay overlay = new LegendarioCaptionOverlay(
                         call.getArray("cues"), call.getObject("style"),
-                        call.getString("presentation", "Frase"), call.getInt("effectMs", 300));
+                        call.getString("presentation", "Frase"), call.getInt("effectMs", 300),getContext());
                 EditedMediaItem item = new EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(input)))
                         .setEffects(new Effects(Collections.emptyList(),
                                 Collections.singletonList(new OverlayEffect(Collections.singletonList(overlay)))))

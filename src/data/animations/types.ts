@@ -7,4 +7,7 @@ export interface SubtitleAnimation {
   mode: AnimationMode;
   duration: number;
   intensity: number;
+  direction?: 'left'|'right'|'up'|'down';
+  easing?: 'linear'|'easeOut'|'easeInOut'|'back';
+  stagger?: number;
 }

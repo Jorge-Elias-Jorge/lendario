@@ -3,6 +3,7 @@ import type {PluginListenerHandle} from '@capacitor/core';
 import type {Cue} from '../core/srt';
 import type {SubtitleStyle} from '../data/styles';
 import {drawCaption} from '../core/captionRender';
+import {loadCaptionFonts} from '../data/fonts';
 
 export type ExportQuality='alta'|'ultra';
 export interface ExportOptions{presentation?:string;effectMs?:number;quality?:ExportQuality}
@@ -67,6 +68,7 @@ export async function exportVideo(videoFile:File|string,cues:Cue[],style:Subtitl
    }finally{await storage.discard({path:rendered.path}).catch(()=>undefined);}
   }
   if(typeof videoFile==='string')throw new Error('Selecione o ficheiro de vídeo neste navegador.');
+  await loadCaptionFonts();
   if(typeof MediaRecorder==='undefined')throw new Error('Este navegador não suporta exportação de vídeo.');
   const mime=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm'].find(value=>MediaRecorder.isTypeSupported(value));
   if(!mime)throw new Error('Este navegador não suporta gravação WebM.');
@@ -86,7 +88,7 @@ export async function exportVideo(videoFile:File|string,cues:Cue[],style:Subtitl
     const timeout=window.setTimeout(()=>reject(new Error('Tempo excedido na exportação.')),Math.max(120000,video.duration*3000+60000));
     const fail=(error:Error)=>{clearTimeout(timeout);reject(error);};
     recorder!.onerror=()=>fail(new Error('Falha do gravador de vídeo.'));recorder!.onstop=()=>{clearTimeout(timeout);resolve(new Blob(chunks,{type:'video/webm'}));};
-    const draw=()=>{try{context.drawImage(video,0,0,canvas.width,canvas.height);const hits=cues.filter(cue=>video.currentTime>=cue.start&&video.currentTime<cue.end&&cue.end>cue.start).sort((a,b)=>b.start-a.start);if(hits[0])drawCaption(context,hits[0],video.currentTime,style,canvas.width,canvas.height,options?.presentation??'Frase',options?.effectMs??300);report(Math.min(80,video.currentTime/video.duration*80),'A gerar vídeo e legendas');if(!video.ended)frame=requestAnimationFrame(draw);}catch(error){fail(error instanceof Error?error:new Error(String(error)));}};
+    const draw=()=>{try{context.drawImage(video,0,0,canvas.width,canvas.height);const hits=cues.filter(cue=>video.currentTime>=cue.start&&video.currentTime<cue.end&&cue.end>cue.start).sort((a,b)=>b.start-a.start);if(hits[0])drawCaption(context,hits[0],style,video.currentTime,canvas.width,canvas.height,{presentation:options?.presentation??'Frase',effectMs:options?.effectMs??300});report(Math.min(80,video.currentTime/video.duration*80),'A gerar vídeo e legendas');if(!video.ended)frame=requestAnimationFrame(draw);}catch(error){fail(error instanceof Error?error:new Error(String(error)));}};
     video.onended=()=>{cancelAnimationFrame(frame);report(80,'A finalizar o ficheiro');if(recorder?.state==='recording')recorder.stop();};recorder!.start(1000);draw();void video.play().catch(error=>fail(new Error(String(error))));
    });
    if(!blob.size)throw new Error('O gravador produziu um vídeo vazio.');video.pause();stream.getTracks().forEach(track=>track.stop());await audio.close();audio=null;
