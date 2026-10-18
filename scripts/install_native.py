@@ -1,11 +1,12 @@
 from pathlib import Path
 import shutil
+import re
 import xml.etree.ElementTree as ET
 
 root=Path(__file__).resolve().parents[1]
 java=root/'android/app/src/main/java/com/legendario/editor'
 java.mkdir(parents=True,exist_ok=True)
-for plugin in ['LegendarioMediaPlugin','LegendarioExportPlugin','LegendarioRenderPlugin']:
+for plugin in ['LegendarioMediaPlugin','LegendarioExportPlugin','LegendarioRenderPlugin','LegendarioCaptionOverlay']:
     shutil.copyfile(root/('native/android/'+plugin+'.java'),java/(plugin+'.java'))
 activity=java/'MainActivity.java'
 text=activity.read_text()
@@ -34,3 +35,34 @@ for name,maximum in permissions:
     if maximum:
         permission.set(ns+'maxSdkVersion',maximum)
 tree.write(manifest,encoding='utf-8',xml_declaration=True)
+
+# Pin all Media3 modules to one tested version and bundle them in the APK.
+# No runtime download, FFmpeg binary, CDN, paid service or remote rendering.
+gradle=root/'android/app/build.gradle'
+text=gradle.read_text()
+start='// BEGIN LEGENDARIO MEDIA3'
+end='// END LEGENDARIO MEDIA3'
+block=start+'''
+dependencies {
+    implementation "androidx.media3:media3-transformer:1.5.1"
+    implementation "androidx.media3:media3-effect:1.5.1"
+    implementation "androidx.media3:media3-common:1.5.1"
+}
+'''+end
+if start in text:
+    before,rest=text.split(start,1)
+    _,after=rest.split(end,1)
+    text=before+block+after
+else:
+    text+='\n'+block+'\n'
+gradle.write_text(text)
+
+variables=root/'android/variables.gradle'
+text=variables.read_text()
+text=re.sub(r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 35', text)
+text=re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 26', text)
+variables.write_text(text)
+
+tests=root/'native/androidTest'
+if tests.is_dir():
+    shutil.copytree(tests,root/'android/app/src/androidTest',dirs_exist_ok=True)

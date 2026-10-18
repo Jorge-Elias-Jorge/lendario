@@ -1,10 +1,10 @@
 import type { SubtitleStyle } from '../styles';
 
-const base: Partial<SubtitleStyle> = {
+const base = {
   fontSize: 44,
   posY: 78,
   fontWeight: 800,
-  align: 'center',
+  align: 'center' as const,
   maxLines: 2
 };
 

@@ -9,6 +9,9 @@ permissions:
   contents: read
 
 jobs:
+  test-offline:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/test-offline-export.yml
   build-android:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -28,9 +31,11 @@ jobs:
           packages: platform-tools
       - name: Instalar dependências
         run: |
-          npm install
-          npm install --save @capacitor/core@^6
-          npm install --save-dev @capacitor/cli@^6 @capacitor/android@^6
+          npm ci
+      - name: Validar tipos e regressões de exportação
+        run: |
+          npm run typecheck
+          npm test
       - name: Compilar recursos locais
         run: |
           if grep -q '"build"' package.json; then npm run build; else npx vite build; fi

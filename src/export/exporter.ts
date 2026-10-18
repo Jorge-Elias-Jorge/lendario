@@ -6,44 +6,67 @@ import {drawCaption} from '../core/captionRender';
 
 export type ExportQuality='alta'|'ultra';
 export interface ExportOptions{presentation?:string;effectMs?:number;quality?:ExportQuality}
-interface RenderBridge{render(options:{source:string;cues:string;style:string;presentation:string;effectMs:number}):Promise<{path:string;mime:string;bytes:number}>;cancel():Promise<void>;addListener(name:'renderProgress',listener:(event:{fraction:number})=>void):Promise<PluginListenerHandle>}
-interface SaveBridge{begin():Promise<{id:string}>;append(options:{id:string;data:string}):Promise<void>;save(options:{id:string}):Promise<{uri:string;bytes:number}>;discard(options:{id:string}):Promise<void>}
+export interface NativeExportResult{kind:'native';uri:string;bytes:number;location:string}
+interface RenderBridge{render(options:{source:string;cues:Cue[];style:SubtitleStyle;presentation:string;effectMs:number;quality:ExportQuality}):Promise<{path:string;mime:string;bytes:number}>;cancel():Promise<void>;addListener(name:'renderProgress',listener:(event:{fraction:number})=>void):Promise<PluginListenerHandle>}
+interface SaveBridge{save(options:{path:string}):Promise<{uri:string;bytes:number;location:string}>;discard(options:{path:string}):Promise<void>}
 const renderer=registerPlugin<RenderBridge>('LegendarioRender');
 const storage=registerPlugin<SaveBridge>('LegendarioExport');
 let busy=false;
-function base64(blob:Blob):Promise<string>{return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('Não foi possível preparar o vídeo.'));reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.readAsDataURL(blob);});}
 function panel(){
  const root=document.createElement('div');root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','Exportação de vídeo');
  root.style.cssText='position:fixed;inset:0;background:#101018;color:white;z-index:2147483647;padding:24px;display:flex;flex-direction:column;justify-content:center;gap:16px';
  const title=document.createElement('h2');title.textContent='A exportar vídeo';
  const label=document.createElement('p');label.setAttribute('role','status');
  const bar=document.createElement('progress');bar.max=100;bar.value=0;bar.style.width='100%';
+ const cancel=document.createElement('button');cancel.textContent='Cancelar exportação';cancel.hidden=true;
  const clock=document.createElement('p');const start=Date.now();
  const tick=()=>{const seconds=Math.floor((Date.now()-start)/1000);clock.textContent='Tempo decorrido: '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');};tick();const timer=setInterval(tick,1000);
- root.append(title,label,bar,clock);document.body.append(root);
- return {update:(value:number,text:string)=>{bar.value=value;label.textContent=Math.floor(value)+'% — '+text;},finish:async(text:string)=>{clearInterval(timer);label.textContent=text;await new Promise<void>(resolve=>{const button=document.createElement('button');button.textContent='Concluir';button.onclick=()=>resolve();root.append(button);button.focus();});root.remove();},remove:()=>{clearInterval(timer);root.remove();}};
+ root.append(title,label,bar,clock,cancel);document.body.append(root);
+ return {
+  update:(value:number,text:string)=>{bar.value=value;label.textContent=Math.floor(value)+'% — '+text;},
+  cancellable:(action:(()=>void)|null)=>{cancel.hidden=!action;cancel.onclick=action;},
+  retry:async(text:string)=>{label.textContent=text;return new Promise<boolean>(resolve=>{
+   const retry=document.createElement('button'),close=document.createElement('button');
+   retry.textContent='Tentar guardar novamente';close.textContent='Descartar vídeo gerado';
+   const done=(value:boolean)=>{retry.remove();close.remove();resolve(value);};
+   retry.onclick=()=>done(true);close.onclick=()=>done(false);root.append(retry,close);retry.focus();
+  });},
+  finish:async(text:string)=>{cancel.hidden=true;clearInterval(timer);label.textContent=text;await new Promise<void>(resolve=>{const button=document.createElement('button');button.textContent='Concluir';button.onclick=()=>resolve();root.append(button);button.focus();});root.remove();},
+  remove:()=>{clearInterval(timer);root.remove();}
+ };
 }
-async function saveAndroid(blob:Blob,update:(value:number,text:string)=>void):Promise<void>{
- const {id}=await storage.begin();
- try{for(let offset=0;offset<blob.size;offset+=524288){await storage.append({id,data:await base64(blob.slice(offset,offset+524288))});update(90+Math.min(offset+524288,blob.size)/blob.size*9,'A preparar gravação local');}
- update(90,'Escolha uma pasta local e confirme Guardar');const result=await storage.save({id});if(result.bytes!==blob.size)throw new Error('Tamanho da cópia diferente do vídeo gerado.');}
- catch(error){await storage.discard({id}).catch(()=>undefined);throw error;}
-}
-export async function exportVideo(videoFile:File,cues:Cue[],style:SubtitleStyle,onProgress?:(value:number)=>void,options?:ExportOptions):Promise<Blob>{
+export async function exportVideo(videoFile:File|string,cues:Cue[],style:SubtitleStyle,onProgress?:(value:number)=>void,options?:ExportOptions):Promise<Blob|NativeExportResult>{
  if(busy)throw new Error('Já existe uma exportação em andamento.');busy=true;
  const ui=panel();const report=(value:number,text:string)=>{ui.update(value,text);onProgress?.(value/100);};
  try{
   report(0,'A preparar');
   if(Capacitor.getPlatform()==='android'){
-   const source=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('Não foi possível ler o vídeo original.'));reader.onload=()=>resolve(String(reader.result));reader.readAsDataURL(videoFile);});
+   if(typeof videoFile!=='string'||!videoFile.startsWith('file://'))throw new Error('Importe o vídeo na biblioteca local antes de exportar.');
+   const source=videoFile;
    const listener=await renderer.addListener('renderProgress',event=>report(Math.min(88,event.fraction*88),'A renderizar vídeo e legendas'));
-   let path:string;
-   try{const result=await renderer.render({source,cues:JSON.stringify(cues),style:JSON.stringify(style),presentation:options?.presentation??'Frase',effectMs:options?.effectMs??300});path=result.path;}finally{await listener.remove();}
-   report(89,'A finalizar o ficheiro MP4');
-   const response=await fetch(Capacitor.convertFileSrc(path));if(!response.ok)throw new Error('Não foi possível abrir o MP4 gerado.');
-   const blob=await response.blob();if(!blob.size)throw new Error('O MP4 gerado está vazio.');
-   await saveAndroid(blob,report);report(100,'Vídeo guardado no destino escolhido');await ui.finish('100% — Vídeo guardado no destino escolhido.');return blob;
+   let cancelled=false;
+   ui.cancellable(()=>{cancelled=true;ui.cancellable(null);void renderer.cancel().catch(()=>undefined);});
+   let rendered:{path:string;mime:string;bytes:number};
+   try{rendered=await renderer.render({source,cues,style,presentation:options?.presentation??'Frase',effectMs:options?.effectMs??300,quality:options?.quality??'alta'});}
+   finally{ui.cancellable(null);await listener.remove().catch(()=>undefined);}
+   try{
+    if(cancelled)throw new Error('Exportação cancelada.');
+    if(rendered.mime!=='video/mp4'||rendered.bytes<=0)throw new Error('O motor nativo não produziu um MP4 válido.');
+    for(;;){
+     report(90,'A guardar MP4 no armazenamento local; no Android 8/9 escolha uma pasta');
+     try{
+      const saved=await storage.save({path:rendered.path});
+      if(saved.bytes!==rendered.bytes)throw new Error('Tamanho da cópia diferente do MP4 gerado.');
+      report(100,'Vídeo guardado: '+saved.location);
+      await ui.finish('100% — MP4 guardado no dispositivo: '+saved.location+'.');
+      return {kind:'native',...saved};
+     }catch(error){
+      if(!await ui.retry((error instanceof Error?error.message:String(error))+' O vídeo está pronto, não é necessário renderizar novamente.'))throw new Error('Gravação descartada pelo utilizador.');
+     }
+    }
+   }finally{await storage.discard({path:rendered.path}).catch(()=>undefined);}
   }
+  if(typeof videoFile==='string')throw new Error('Selecione o ficheiro de vídeo neste navegador.');
   if(typeof MediaRecorder==='undefined')throw new Error('Este navegador não suporta exportação de vídeo.');
   const mime=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm'].find(value=>MediaRecorder.isTypeSupported(value));
   if(!mime)throw new Error('Este navegador não suporta gravação WebM.');
