@@ -48,6 +48,9 @@ public class OfflineExportTest {
         return file;
     }
     private void export(String name, boolean expectedAudio, boolean portrait) throws Exception {
+        export(name,expectedAudio,portrait,style());
+    }
+    private void export(String name, boolean expectedAudio, boolean portrait,JSONObject look) throws Exception {
         File input = fixture(name);
         File output = new File(input.getParentFile(), "export-"+name);
         output.delete();
@@ -55,7 +58,7 @@ public class OfflineExportTest {
         AtomicReference<Throwable> failure = new AtomicReference<>();
         AtomicReference<Transformer> active = new AtomicReference<>();
         AtomicReference<ExportResult> result = new AtomicReference<>();
-        LegendarioCaptionOverlay overlay = new LegendarioCaptionOverlay(cues(),style(),"Frase",300);
+        LegendarioCaptionOverlay overlay = new LegendarioCaptionOverlay(cues(),look,"Frase",300,InstrumentationRegistry.getInstrumentation().getTargetContext());
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
             try {
                 EditedMediaItem item = new EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(input)))
@@ -177,6 +180,58 @@ public class OfflineExportTest {
             RecordedCall discard=new RecordedCall(discardData);storage.get().discard(discard);discard.await();
             assertFalse(output.exists());
         }finally{imported.delete();original.delete();}
+    }
+
+    private String asset(String name)throws Exception{
+        try(InputStream in=InstrumentationRegistry.getInstrumentation().getContext().getAssets().open(name);
+            ByteArrayOutputStream out=new ByteArrayOutputStream()){
+            byte[] buffer=new byte[8192];int n;while((n=in.read(buffer))!=-1)out.write(buffer,0,n);
+            return out.toString("UTF-8");
+        }
+    }
+    @Test public void animationMathMatchesCanvasFixtures()throws Exception{
+        JSONArray vectors=new JSONArray(asset("motion-fixtures.json"));
+        assertTrue(vectors.length()>1000);
+        for(int i=0;i<vectors.length();i++){
+            JSONObject v=vectors.getJSONObject(i);
+            LegendarioMotion.Frame f=LegendarioMotion.sample(v.getJSONObject("animation"),v.getDouble("progress"),v.getDouble("seed"),v.getBoolean("loop"));
+            JSONObject expected=v.getJSONObject("expected");
+            java.util.Iterator<String> keys=expected.keys();
+            while(keys.hasNext()){
+                String key=keys.next();
+                assertEquals("Vetor "+i+"/"+key,expected.getDouble(key),f.getClass().getField(key).getDouble(f),.00001);
+            }
+        }
+    }
+    @Test public void everyCatalogRecipeDrawsWithBundledFonts()throws Exception{
+        JSONObject catalog=new JSONObject(asset("caption-catalog.json"));
+        JSONArray styles=catalog.getJSONArray("styles"),animations=catalog.getJSONArray("animations");
+        Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertTrue(styles.length()>100);assertTrue(animations.length()>90);
+        for(int i=0;i<styles.length()+animations.length();i++){
+            JSONObject look=i<styles.length()?styles.getJSONObject(i):style();
+            if(i>=styles.length()){
+                JSONObject animation=animations.getJSONObject(i-styles.length());
+                look.put("animationTracks",new JSONObject().put(animation.getString("mode"),animation));
+            }
+            LegendarioCaptionOverlay overlay=new LegendarioCaptionOverlay(cues(),look,look.optString("presentation","Frase"),300,context);
+            overlay.configure(new Size(720,1280));
+            Bitmap bitmap=overlay.getBitmap(1_400_000);
+            int visible=0;
+            for(int y=0;y<bitmap.getHeight();y+=3)for(int x=0;x<bitmap.getWidth();x+=3)if(android.graphics.Color.alpha(bitmap.getPixel(x,y))>16)visible++;
+            assertTrue("Receita invisível: "+look.optString("id","animation-"+i),visible>5);
+            overlay.release();
+        }
+    }
+    @Test public void studioCompositionExportsMp4Offline()throws Exception{
+        JSONObject look=style();
+        look.put("fontFamily","Manrope").put("fontWeight",800).put("backgroundColor","#18202B").put("backgroundRadius",10);
+        look.put("animationTracks",new JSONObject()
+                .put("in",new JSONObject("{\"type\":\"Blur\",\"mode\":\"in\",\"duration\":300,\"intensity\":0.7}"))
+                .put("out",new JSONObject("{\"type\":\"Fade\",\"mode\":\"out\",\"duration\":300,\"intensity\":1}"))
+                .put("loop",new JSONObject("{\"type\":\"Float\",\"mode\":\"loop\",\"duration\":1200,\"intensity\":0.4}"))
+                .put("char",new JSONObject("{\"type\":\"Pop\",\"mode\":\"char\",\"duration\":180,\"intensity\":0.6}")));
+        export("audio.mp4",true,false,look);
     }
 
     private static class RecordedCall extends PluginCall {

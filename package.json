@@ -4,6 +4,8 @@
   "version": "1.0.2",
   "type": "module",
   "scripts": {
+    "catalog:fixtures": "node scripts/generate-caption-fixtures.mjs",
+    "pretest": "npm run catalog:fixtures",
     "test": "vitest run",
     "dev": "vite",
     "build": "vite build",

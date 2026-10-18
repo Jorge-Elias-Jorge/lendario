@@ -2,6 +2,12 @@
 
 Editor React/Capacitor de legendas dinâmicas para vídeo. O APK Android inclui um motor de exportação nativo e não precisa de internet para renderizar ou guardar vídeos.
 
+## Estúdio de legendas
+
+Inclui 105 estilos e 99 animações combináveis em sete camadas, com seis fontes incluídas para utilização offline. Abra **Explorar estilos e animações** na página inicial para experimentar sem importar um vídeo. Os novos tratamentos também são implementados na exportação MP4.
+
+O APK debug “LEGENDÁRIO Studio teste” instala-se separadamente da versão anterior, sem migrar ou apagar rascunhos existentes. A documentação de recursos, referências públicas e limites está em [Estúdio de legendas](docs/ESTUDIO-DE-LEGENDAS.md).
+
 ## Exportação Android
 
 - Motor AndroidX Media3 Transformer 1.5.1, incluído no APK: descodificação/codificação com MediaCodec e composição de legendas por GPU.

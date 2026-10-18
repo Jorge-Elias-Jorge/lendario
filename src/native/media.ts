@@ -4,7 +4,7 @@ import type {SubtitleStyle} from '../data/styles';
 import type {SubtitleAnimation} from '../data/animations';
 export interface Access {videos:boolean;images:boolean;partial:boolean}
 export interface MediaItem {uri:string;name:string;size:number;duration:number;kind:'videos'|'images';thumbnail?:string}
-export interface Draft {id:string;name:string;updated:number;path?:string;thumbnail?:string;missing?:boolean;cues:Cue[];style:SubtitleStyle;animation:SubtitleAnimation}
+export interface Draft {id:string;name:string;updated:number;path?:string;thumbnail?:string;missing?:boolean;cues:Cue[];style:SubtitleStyle;animation:SubtitleAnimation;presentation?:'Frase'|'Realce ativo'|'Palavra'|'Blocos';effectMs?:number}
 export type DraftRow=Pick<Draft,'id'|'name'|'updated'|'thumbnail'>;
 interface NativeMedia {
  access():Promise<Access>;

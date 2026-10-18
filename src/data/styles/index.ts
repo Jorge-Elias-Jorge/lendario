@@ -1,4 +1,5 @@
 import type { SubtitleStyle } from '../styles';
+import {STUDIO_STYLE_GROUPS} from './studio';
 
 const base = {
   fontSize: 44,
@@ -9,6 +10,7 @@ const base = {
 };
 
 export const STYLE_GROUPS: Record<string, SubtitleStyle[]> = {
+  ...STUDIO_STYLE_GROUPS,
   Minimalistas: [
     { id: 'branco-simples', name: 'Branco simples', category: 'Minimalistas', color: '#FFFFFF', highlightColor: '#FFFFFF', ...base, defaultMotion: 'Sem animação' },
     { id: 'branco-sombra', name: 'Branco com sombra', category: 'Minimalistas', color: '#FFFFFF', highlightColor: '#FFFFFF', ...base, shadow: true, defaultMotion: 'Sem animação' },

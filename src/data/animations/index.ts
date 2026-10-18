@@ -4,6 +4,7 @@ import { EXIT_ANIMATIONS } from './saida';
 import { HIGHLIGHT_ANIMATIONS } from './destaque';
 import { WORD_ANIMATIONS } from './palavra';
 import { LOOP_ANIMATIONS } from './loop';
+import {STUDIO_ANIMATION_GROUPS} from './studio';
 
 export type { SubtitleAnimation, AnimationMode } from './types';
 
@@ -12,7 +13,8 @@ export const ANIMATION_GROUPS: Record<string, SubtitleAnimation[]> = {
   Saída: EXIT_ANIMATIONS,
   Destaque: HIGHLIGHT_ANIMATIONS,
   Palavra: WORD_ANIMATIONS,
-  Contínuas: LOOP_ANIMATIONS
+  Contínuas: LOOP_ANIMATIONS,
+  ...STUDIO_ANIMATION_GROUPS
 };
 
 function uniqueById(items: SubtitleAnimation[]): SubtitleAnimation[] {
