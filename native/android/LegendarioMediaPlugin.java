@@ -54,11 +54,7 @@ public class LegendarioMediaPlugin extends Plugin {
      while(items.length()<limit && cursor.moveToNext()){
       Uri uri=ContentUris.withAppendedId(collection,cursor.getLong(0));
       JSObject row=new JSObject();row.put("uri",uri.toString());row.put("name",cursor.getString(1));row.put("size",cursor.getLong(2));row.put("duration",video?cursor.getLong(3)/1000.0:0);row.put("kind",video?"videos":"images");
-      if(Build.VERSION.SDK_INT>=29){try{
-       Bitmap bitmap=getContext().getContentResolver().loadThumbnail(uri,new Size(160,100),null);
-       ByteArrayOutputStream bytes=new ByteArrayOutputStream();bitmap.compress(Bitmap.CompressFormat.JPEG,65,bytes);bitmap.recycle();
-       row.put("thumbnail","data:image/jpeg;base64,"+Base64.encodeToString(bytes.toByteArray(),Base64.NO_WRAP));
-      }catch(Exception ignored){}}
+      try{String thumbnail=LegendarioThumbnail.create(getContext(),uri,video);if(thumbnail!=null)row.put("thumbnail",thumbnail);}catch(Exception ignored){}
       items.put(row);
      }
     }
