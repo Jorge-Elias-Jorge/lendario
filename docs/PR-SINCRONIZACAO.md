@@ -22,7 +22,7 @@ PR empilhado sobre `feat/viral-caption-studio` ([PR #2](https://github.com/Jorge
 - TypeScript, Vite e **139 testes JavaScript** passaram localmente.
 - [Primeira execução Android](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39094545220): build e **12 testes em cada versão, Android 8 e 10**, aprovados. Relatórios XML descarregados e conferidos: zero falhas/erros.
 - Testes nativos incluem reconhecimento com modelo incluído sem INTERNET, silêncio inicial de dois segundos, ausência de áudio, cancelamento, tempos por palavra não uniformes e regressões de exportação.
-- [Execução da revisão final](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39094998541): inclui proteções de concorrência/recursos e identificador paralelo `.sync`. Consultar a execução para o estado final, sem confundir o resultado anterior com esta revisão.
+- [Execução da revisão final](https://github.com/Jorge-Elias-Jorge/lendario/actions/runs/39095199194): inclui proteções de concorrência/recursos, identificador paralelo `.sync` e verificação de sobreposição com legendas envolventes. Consultar a execução para o estado final, sem confundir o resultado anterior com esta revisão.
 - Chromium em desktop/375 px e claro/escuro sem overflow horizontal nos estados medidos.
 - Fluxos de revisão, seleção, aplicação parcial, persistência/reabertura, restauração, SRT atual/original, erro, ausência de palavras, cancelamento, filtro e resultado desatualizado exercitados com ponte nativa simulada. Esses testes de UI não são testes acústicos; o reconhecimento real é exercitado nos testes nativos.
 
